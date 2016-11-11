@@ -1,0 +1,142 @@
+#! /usr/bin/python
+
+#--------------------------------------------------------------------------------------------------------------------------
+# Program: SWARM
+# Version: 1.0
+# Author: Szech696
+# Desciption: SWARM is a bruteforce utility for HTML login forms. 
+# SWARM was intended as a demonstration of the custom classes the Author has included, and a simple demonstration of how 
+# these classes can be used. 
+# The speed of SWARM greatly depends upon how fast your connection/computer are. The better the processor the faster, and
+# more (if specified) threads SWARM executes. The quicker your connection, the faster POST requests can be made.
+# -------------------------------------------------------------------------------------------------------------------------
+# THIS IS FOR EDUCATION OR RESEARCH USE ONLY. AUTHOR DOES NOT CONDONE ANY USE FOR ATTEMPT TO GAIN UNAUTHORIZED ACCESS TO 
+# SOMEONE ELSES ACCOUNT. DO NOT USE ON A DOMAIN THAT DOES NOT BELONG TO YOU, OR YOU DO NOT HAVE PERMISSION TO DO SO!
+# USE AT YOUR OWN RISK!! AND ABOVE ALL ELSE - ENJOY ;)
+#--------------------------------------------------------------------------------------------------------------------------
+from console import Console
+from hive import HttpHive
+import getopt, sys
+import random
+con = Console()
+
+# function: displayLogo
+# description: Displays the swarm logo, and other info
+# param: *NOTE CHANGE TO HIVE, DO ALL DISPLAYING IN HERE
+def displayInfo(hive,checkTor=False):
+	logo = ''
+	for line in open('swarm-data','r').readlines():
+		logo += line
+	logos = logo.split('(-$-)')
+	logo = random.choice(logos)
+	tor = False
+	method = ''
+	if hive.checkTor():
+		tor = True
+	if hive.form_method == 0:
+		method = 'POST'
+	else:
+		method = 'GET'
+	
+	message = con.format(logo,['yellow','bold'])
+	message += '\n'
+	message += con.format('SWARM\n',['magenta'])
+	message += con.format('Author: %s\n',['dim'])%(con.format('Szech696',['white']))
+	message += con.format('Target: %s\n',['dim'])%(con.format(hive.url,['white']))
+	message += con.format('Method: %s\n',['dim'])%(con.format(method,['white']))
+	message += con.format('Base Payload: %s\n',['dim'])%(con.format(str(hive.examplePayload),['white']))
+	if not hive.username:
+		message += con.format('Username File: %s\n',['dim'])%(con.format(hive.usernameFile,['white']))
+	else:
+		message += con.format('Username: %s\n',['dim'])%(con.format(hive.username,['white']))
+	message += con.format('Password File: %s\n',['dim'])%(con.format(hive.passwordFile,['white']))
+	if tor:
+		message += con.format('Using Tor: %s\n',['dim'])%(con.format(str(tor),['green','bold']))
+	else:
+		message += con.format('Using Tor: %s\n',['dim'])%(con.format(str(tor),['red','bold']))
+	print(message)
+	if not tor:
+		if checkTor:
+			print(con.getTimeString() + con.format(' Something went wrong with TOR did you specify: --tor? Is TOR properly installed? You could also '+
+								'try: sudo pip install -U requests[socks]',['red']))
+			exit()
+	
+# function: usage
+# description: Displays Example message and exits
+def usage():
+	print('Usage:')
+	print('\t'+sys.argv[0] + ' %s %s %s '%('--url=http://example.com/login.php',
+			'--user-file=usernames.txt',
+			'--pass-file=passwords.txt'))
+	sys.exit()
+
+# function: help
+# description: Displays the help message and exits
+def showhelp():
+	print('\t--url=<argument>		The URL where the login form is located')
+	print('\t--username=<argument>		Use a specific username for each attempt (overrides --user-file option)')
+	print('\t--user-file=<argument>		The username file to use with swarm')
+	print('\t--pass-file=<argument>		The password file to use with swarm')
+	print('\t--threads=<argument>		The number of threads to run swarm with. NOTE depending on the CPU, to many threads can hurt performance')
+	print('\t--verbose			Verbose output')
+	print('\t--update-time=<argument>	The total time in seconds to show swarm statistics')	
+	print('\t--tor				Use tor with swarm')
+	print('\t--check-tor			To confirm you are using TOR before swarm continues.')
+	usage()
+
+# function: main
+# param: argv		- System arguments
+# description: Main function of swarm
+def main(argv):
+	checkTor = False
+	total_threads = 1
+	try:
+		opts, args = getopt.getopt(argv[1:],'' ,['help','url=','user-file=','pass-file=','threads=','verbose','update-time=','tor','check-tor', 'username='])	
+	except getopt.GetoptError as err:
+		print(str(err))
+		usage()
+	hive = HttpHive()
+	for opt, arg in opts:
+		if opt == '--help':
+			showhelp()
+		if opt == '--url':
+			hive.url = arg
+		if opt == '--username':
+			hive.username = arg
+		if opt == '--user-file':
+			hive.usernameFile = arg
+		if opt == '--pass-file':
+			hive.passwordFile = arg
+		if opt == '--threads':
+			total_threads = int(arg)
+		if opt == '--verbose':
+			hive.verbose = True	
+		if opt == '--update-time':
+			hive.UPDATE_TIME = int(arg)
+		if opt == '--check-tor':
+			checkTor = True
+		if opt == '--tor':
+			hive.useTor = True
+	# - must include a username file or will display error message and exit
+	if not hive.usernameFile and not hive.username:
+		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing username file..')	
+		print('--help 		for all options and arguments')
+		usage()
+	# - must include a password file or will display error message and exit
+	if not hive.passwordFile:
+		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing password file..')	
+		print('--help 		for all options and arguments')
+		usage()
+	# - must include a url to target or will display error message and exit
+	if hive.url:
+		hive.setup()
+		displayInfo(hive,checkTor)
+		hive.start(total_threads)
+	# - starting swarm on target
+	else:
+		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing target..')	
+		print('--help 		for all options and arguments')
+		usage()
+
+if __name__ == "__main__":
+	main(sys.argv)
