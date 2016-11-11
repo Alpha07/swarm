@@ -26,4 +26,7 @@
 #	tor			- If you want to use tor, tor must be installed
 #		apt-get install tor	- on Debian
 #		yum --install tor	- on Red Hat Based linux
+#
+# NOTE: Currently swarm can not handle 'onclick handles' I am currently working to add this feature. I do not want to use to many dependencies, 
+#	so currently working on my own solutions. This feature will be implemented momentarily.
 ```
