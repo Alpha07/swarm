@@ -1,8 +1,6 @@
 #! /usr/bin/python
 
 #--------------------------------------------------------------------------------------------------------------------------
-# Program: SWARM
-# Version: 1.0
 # Author: Szech696
 # Desciption: SWARM is a bruteforce utility for HTML login forms. 
 # SWARM was intended as a demonstration of the custom classes the Author has included, and a simple demonstration of how 
@@ -21,8 +19,9 @@ import random
 con = Console()
 
 # function: displayLogo
+# param: Hive	  - hive object
+# param: Boolean  - Should check TOR before it continues. If True and TOR is not setup properly then exit. 
 # description: Displays the swarm logo, and other info
-# param: *NOTE CHANGE TO HIVE, DO ALL DISPLAYING IN HERE
 def displayInfo(hive,checkTor=False):
 	logo = ''
 	for line in open('swarm-data','r').readlines():
