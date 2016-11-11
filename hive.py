@@ -31,7 +31,6 @@ class Hive:
 	startTime = None
 	threadLock = None
 	total_attempts = None
-	total_possible_attempts = None
 	lastUpdated = None
 	verbose = None
 	__onSuccessHandle__ = None
@@ -49,7 +48,6 @@ class Hive:
 		self.isFinished = False	
 		self.threadLock = threading.Lock()
 		self.total_attempts = 0
-		self.total_possible_attempts = 0
 		# *NOTE* This is initializing self.sharedTriedCredentials filled with null values, with the size of self.MAX_HISTORY_SIZE
 		# CURRENTLY self.sharedTriedCredentials IS UNUSED
 		for count in range(self.MAX_HISTORY_SIZE):
@@ -61,7 +59,6 @@ class Hive:
 		self.logLock = threading.Lock()
 
 	# function: start
-	# param: func_handle(function) 		- The function used to do the main work of bruteforcing
 	# param: workers(int)			- The number of threads to create
 	# description: Starts the bruteforcing process
 	def start(self, workers=1):
@@ -166,19 +163,13 @@ class Hive:
 				self.historyIndex += 1
 				isDepositing = False
 
-	# function: getProgress
-	# return: (float)	- 0.0 - 1.0
-	# description: returns the total progress of the bruteforce 
-	def getProgress(self):
-		progress = float(self.total_attempts) / float(self.total_possible_attempts)
-		return progress
-
-	# function: attemptLogin - Override!!!! 	
+	# function: attemptLogin - Override 	
 	# param: Credential	- The credentials to attempt a login with
-	# return: Boolean
+	# return: Boolean	- Any object that overrides this should return True | False
 	# description: Any object that inherits from Hive, should have their own version of this function
 	def attemptLogin(self,credential):
 		self.total_attempts += 1
+		return False
 
 	# function: __displayMessage__
 	# param: credential
