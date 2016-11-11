@@ -41,7 +41,10 @@ class BloomFilter(object):
 		hashed_string = md5.new()
 		hashed_string.update(string+str(offset))
 		hex_position = hashed_string.hexdigest()	
-		position = (int(hex_position,16))/len(string)
+		try:
+			position = (int(hex_position,16))/len(string)
+		except ZeroDivisionError:
+			position = (int(hex_position,16))/2
 		position = (position%self.size) 		#Ensuring position falls within the correct range
 		return position 
 

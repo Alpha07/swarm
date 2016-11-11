@@ -6,6 +6,7 @@ import time
 from console import Console
 import random
 from bloomfilter import BloomFilter
+from ftplib import FTP
 try:
 	import pexpect
 except:
@@ -262,7 +263,7 @@ class Hive:
 		elapsed = time.time() - self.startTime
 		self.lastUpdated = time.time()
 		aps = float(self.total_attempts/elapsed)
-		return {'target':self.url,'total-attempts':str(self.total_attempts),'attempts-per-second':'%.2f'%aps,'total-time (seconds)':'%.2f'%elapsed}
+		return {'target':self.target,'total-attempts':str(self.total_attempts),'attempts-per-second':'%.2f'%aps,'total-time (seconds)':'%.2f'%elapsed}
 	
 	# function: setOnSuccessHandle
 	# param: handle		- Custom handle to deal with successful logins
@@ -567,4 +568,3 @@ class SSHHive(Hive):
 	# description: This is another example of a post exploit function, as you can see it requires a credential object
 	def postExploit(self,credential):
 		pass
-	
