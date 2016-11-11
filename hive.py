@@ -56,7 +56,6 @@ class Hive:
 	# param: func_handle(function) 		- The function used to do the main work of bruteforcing
 	# param: workers(int)			- The number of threads to create
 	# description: Starts the bruteforcing process
-	# *NOTE* Needs refining, can't be stuck in here perhaps i need another thread to getNextCredResult
 	def start(self, workers=1):
 		self.startTime = time.time()
 		for count in range(workers):
@@ -102,8 +101,7 @@ class Hive:
 		self.sharedUsernameList = sorted(self.sharedUsernameList,reverse=True)
 		self.sharedPasswordList = sorted(self.sharedPasswordList,reverse=True)
 
-	# function: getPassword 
-	# param: index(int)		- The index of the password in the sharedPasswordList
+	# function: getNextPassword 
 	# return: (str) | (None) - if last index
 	# description: password at position index
 	def getNextPassword(self):	
@@ -441,8 +439,6 @@ class HttpHive(Hive):
 	# function: checkSuccess
 	# param: response
 	# return: Boolean
-	# description: Returns whether this was a successful login response or not *NOTE* Needs refining, checking whether the URL has changed will not suffice
-	#	Need to check cookies, for forms, etc.
 	def checkSuccess(self,response):
 		success = False
                 if response.url != self.failed_dict['url']:
@@ -479,9 +475,9 @@ class HttpHive(Hive):
 		if self.useTor:
 			self.setupTOR()
 	
-	# function: getRandomAgent
+	# function: getSpoofedHeaders
 	# return: dict		- A dict that represents a user-agent inside the HTTP header
-	# description: Returns a spoofed random agent, to use with the login. Increases stealth
+	# description: Returns a spoofed headers, to use with the login. Increases stealth
 	def getSpoofedHeaders(self):
 		headers = {'Connection':'close','User-Agent':random.choice(self.userAgents)}
 		return headers
