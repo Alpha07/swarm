@@ -41,7 +41,7 @@ def displayInfo(hive,checkTor=False):
 	message += '\n'
 	message += con.format('SWARM\n',['magenta'])
 	message += con.format('Author: %s\n',['dim'])%(con.format('Szech696',['white']))
-	message += con.format('Target: %s\n',['dim'])%(con.format(hive.url,['white']))
+	message += con.format('Target: %s\n',['dim'])%(con.format(hive.target,['white']))
 	message += con.format('Method: %s\n',['dim'])%(con.format(method,['white']))
 	message += con.format('Base Payload: %s\n',['dim'])%(con.format(str(hive.examplePayload),['white']))
 	if not hive.username:
@@ -99,7 +99,7 @@ def main(argv):
 		if opt == '--help':
 			showhelp()
 		if opt == '--url':
-			hive.url = arg
+			hive.target = arg
 		if opt == '--username':
 			hive.username = arg
 		if opt == '--user-file':
@@ -127,7 +127,7 @@ def main(argv):
 		print('--help 		for all options and arguments')
 		usage()
 	# - must include a url to target or will display error message and exit
-	if hive.url:
+	if hive.target:
 		hive.setup()
 		displayInfo(hive,checkTor)
 		hive.start(total_threads)
