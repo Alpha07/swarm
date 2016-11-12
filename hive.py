@@ -565,7 +565,6 @@ class FTPHive(Hive):
 	ftp = None
 	def __init__(self):
 		Hive.__init__(self)
-		self.FTPLock = threading.Lock()
 	
 	# function: attemptLogin	- Overriden
 	# param: credential		- The credential to attempt a login with
