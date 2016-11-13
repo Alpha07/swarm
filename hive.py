@@ -459,6 +459,7 @@ class HttpHive(Hive):
 		failedbaseline['forms'] = self.__findForms__(response.text)
                 self.failed_dict = failedbaseline
 	
+	
 	# function: setup - Overriden
 	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
 	def setup(self):
@@ -468,6 +469,7 @@ class HttpHive(Hive):
 		login = self.__getLoginForm__(forms)
 		self.basePayload = self.__findFields__(login)
 		self.setFailedBaseline(self.basePayload)
+		# Setting handle for post exploitation, to self.postExploit
 		self.setOnSuccessHandle(self.postExploit)
 		if self.useTor:
 			self.setupTOR()
@@ -566,6 +568,7 @@ class FTPHive(Hive):
 	def __init__(self):
 		Hive.__init__(self)
 	
+		
 	# function: attemptLogin	- Overriden
 	# param: credential		- The credential to attempt a login with
 	# return: Boolean		- True if Success | False if Failure
@@ -592,4 +595,3 @@ class FTPHive(Hive):
 	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
 	def setup(self):
 		Hive.setup(self)	
-

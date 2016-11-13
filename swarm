@@ -3,13 +3,11 @@
 #--------------------------------------------------------------------------------------------------------------------------
 # Author: Szech696
 # Desciption: SWARM is a bruteforce utility for HTML login forms. 
-# SWARM was intended as a demonstration of the custom classes the Author has included, and a simple demonstration of how 
-# these classes can be used. 
 # The speed of SWARM greatly depends upon how fast your connection/computer are. The better the processor the faster, and
 # more (if specified) threads SWARM executes. The quicker your connection, the faster POST requests can be made.
 # -------------------------------------------------------------------------------------------------------------------------
 # THIS IS FOR EDUCATION OR RESEARCH USE ONLY. AUTHOR DOES NOT CONDONE ANY USE FOR ATTEMPT TO GAIN UNAUTHORIZED ACCESS TO 
-# SOMEONE ELSES ACCOUNT. DO NOT USE ON A DOMAIN THAT DOES NOT BELONG TO YOU, OR YOU DO NOT HAVE PERMISSION TO DO SO!
+# SOMEONE ELSES ACCOUNT and/or PROPERTY. DO NOT USE ON A DOMAIN/PROPERTY THAT DOES NOT BELONG TO YOU, OR YOU DO NOT HAVE PERMISSION TO DO SO!
 # USE AT YOUR OWN RISK!! AND ABOVE ALL ELSE - ENJOY ;)
 #--------------------------------------------------------------------------------------------------------------------------
 from console import Console
