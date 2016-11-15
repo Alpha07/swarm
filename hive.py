@@ -330,7 +330,8 @@ class HttpHive(Hive):
         NAME_REGEX = re.compile(r'name\=\"(.*?)\"|name\=\'(.*?)\'') 
         VALUE_REGEX = re.compile(r'value\=\"(.*?)\"|value\=\'(.*?)\'')
         LOGIN_REGEX = re.compile(r'<input\stype\=\"password\"|<input\stype\=\'password\'')
-        FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)')
+       # FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)')
+        FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)|(<input\sname\=.*?>)')
 	CHECK_TOR_REGEX = re.compile(r'Congratulations\.\sThis\sbrowser\sis\sconfigured\sto\suse\sTor\.')
 	AUTHENTICATION_TYPE = re.compile(r'method\=\'(post)\'|method\=\"(post)\"|method\=\'(get)\'|method\=\"(get)\"')
 	# Base payload for our login attempts
@@ -382,29 +383,30 @@ class HttpHive(Hive):
 		fields = list()
                 payload = dict()
                 fields = self.FIELD_REGEX.findall(form_code)
-                for field in fields:
-                        name = ""
-                        value = ""
-                        if self.NAME_REGEX.search(field):
-                                name = self.NAME_REGEX.findall(field)[0]
-				if name[0] == '':
-					name = name[1]
-				else:
-					name = name[0]
-                                if self.LOGIN_REGEX.search(field):
-                                        self.password_field_name = name
-                        if self.VALUE_REGEX.search(field):
-                                value = self.VALUE_REGEX.findall(field)[0]
-				if value[0] == '':
-					value = value[1]
-				else:
-					value = value[0]
-                        if len(name) > 0 and len(value) > 0:
-                                payload[name] = value
-                        elif len(name) > 0:
-                                payload[name] = ""
-                                if name != self.password_field_name:
-                                        self.username_field_name = name
+		for array in fields:
+			for field in array:
+       		                name = ""
+                 	        value = ""
+                        	if self.NAME_REGEX.search(field):
+                                	name = self.NAME_REGEX.findall(field)[0]
+					if name[0] == '':
+						name = name[1]
+					else:
+						name = name[0]
+                                	if self.LOGIN_REGEX.search(field):
+                                        	self.password_field_name = name
+                        	if self.VALUE_REGEX.search(field):
+                                	value = self.VALUE_REGEX.findall(field)[0]
+					if value[0] == '':
+						value = value[1]
+					else:
+						value = value[0]
+                        	if len(name) > 0 and len(value) > 0:
+                                	payload[name] = value
+                        	elif len(name) > 0:
+                                	payload[name] = ""
+                                	if name != self.password_field_name:
+                                        	self.username_field_name = name
 		if self.form_method == 0:
 			self.examplePayload = payload
 		else:
