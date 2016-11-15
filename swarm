@@ -79,6 +79,7 @@ def showhelp():
 	print('\t--update-time=<argument>	The total time in seconds to show swarm statistics')	
 	print('\t--tor				Use tor with swarm')
 	print('\t--check-tor			To confirm you are using TOR before swarm continues.')
+	print('\t--sql-inject			Try to bypass login with SQL Injections.')
 	usage()
 
 # function: main
@@ -88,7 +89,7 @@ def main(argv):
 	checkTor = False
 	total_threads = 1
 	try:
-		opts, args = getopt.getopt(argv[1:],'' ,['help','url=','user-file=','pass-file=','threads=','verbose','update-time=','tor','check-tor', 'username='])	
+		opts, args = getopt.getopt(argv[1:],'' ,['help','url=','user-file=','pass-file=','threads=','verbose','update-time=','tor','check-tor', 'username=','sql-inject'])	
 	except getopt.GetoptError as err:
 		print(str(err))
 		usage()
@@ -114,6 +115,8 @@ def main(argv):
 			checkTor = True
 		if opt == '--tor':
 			hive.useTor = True
+		if opt == '--sql-inject':
+			hive.testSQLInjections = True
 	# - must include a username file or will display error message and exit
 	if not hive.usernameFile and not hive.username:
 		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing username file..')	
