@@ -47,6 +47,10 @@ def displayInfo(hive,checkTor=False):
 	else:
 		message += con.format('Username: %s\n',['dim'])%(con.format(hive.username,['white']))
 	message += con.format('Password File: %s\n',['dim'])%(con.format(hive.passwordFile,['white']))
+	if hive.testSQLInjections:
+		message += con.format('Attempt Login with SQL-injection: %s\n',['dim'])%(con.format(str(hive.testSQLInjections),['green','bold']))
+	else:
+		message += con.format('Attempt Login with SQL-injection: %s\n',['dim'])%(con.format(str(hive.testSQLInjections),['red','bold']))
 	if tor:
 		message += con.format('Using Tor: %s\n',['dim'])%(con.format(str(tor),['green','bold']))
 	else:
