@@ -38,7 +38,8 @@ apt-get install tor
 ```shell
 ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
-##Using Hive to Develop New Tools - FTPHive
+##Using Hive to Develop New Tools 
+Hive makes developing new bruteforcing tools a breeze! The following is an example of an FTP bruteforcer
 ```python
 from hive import Hive
 from ftplib import FTP
