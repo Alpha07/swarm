@@ -74,7 +74,6 @@ class FTPHive(Hive):
 	# function: setup
         # description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
         def setup(self):
-		# Must call parent object's setup
                 Hive.setup(self)
 
 	# function: post_exploit
