@@ -27,7 +27,6 @@ pip install requests
 pip install -U requests[socks]
 pip install pexpect
 apt-get install tor
-```
 ``` 
 ###Usage
 
