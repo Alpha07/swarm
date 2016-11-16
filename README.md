@@ -4,12 +4,12 @@
  By using Swarm or any files included, you understand that you are AGREEING TO USE AT YOUR OWN RISK. Once again Swarm and ALL files included are for EDUCATION and/or RESEARCH purposes ONLY.
  Swarm is ONLY intended to be used on your own pentesting labs, or with explicit consent from the owner of the property being tested.** 
  
-# Getting Started:
+##Getting Started:
 To use, you must first give the script execute permissions, via: 
 ```shell
 sudo chmod 755 swarm		
 ```	
-# For all options:
+For all options:
 ```shell
 sudo ./swarm --help
 ``` 
