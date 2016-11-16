@@ -17,15 +17,16 @@
 ##Getting Started
 To use, you must first give the script execute permissions, via
 ```shell
-sudo chmod 755 swarm		
+git clone https://github.com/szech696/swarm && cd swarm
+chmod 755 swarm		
 ```	
 For all options
 ```shell
-sudo ./swarm --help
+./swarm --help
 ``` 
 ##Basic example of how to use on Damn Vulnerable Web App
 ```shell
-sudo ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
+./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
 ##Inheritence Example - FTPHive
 ```python
