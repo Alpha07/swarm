@@ -12,7 +12,7 @@
 * Randomized user agents
 * Able to tunnel requests through tor, just use --tor option
 * Able to by-pass logins via SQL Injections if option is specified
-* Easy to inherit from to create different types of bruteforcing tools
+* Easy to inherit from Hive to create different types of bruteforcing tools
 
 #Getting Started
 To use, first clone the github repo, and then give swarm execute permissions
@@ -39,7 +39,7 @@ apt-get install tor
 ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
 ##Using Hive to Develop New Tools 
-Hive makes developing new bruteforcing tools a breeze! The following is an example of an FTP bruteforcer
+Hive makes developing new bruteforcing tools a breeze! The following is an example of a FTP bruteforcer
 ```python
 from hive import Hive
 from ftplib import FTP
