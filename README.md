@@ -38,7 +38,7 @@ apt-get install tor
 ```shell
 ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
-##Inheritence Example - FTPHive
+##Using Hive to Develop New Tools - FTPHive
 ```python
 from hive import Hive
 from ftplib import FTP
