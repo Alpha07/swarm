@@ -7,14 +7,14 @@
 
 #About Swarm 
 **Swarm is a Bruteforcing pentesting tool for bruteforcing html logins**
-###Some Notable Features
+##Some Notable Features
 * Multi-Threaded
 * Randomized user agents
 * Supports TOR
 * By-pass logins via SQL Injections
 * Easy to inherit from to create different types of bruteforcing tools
 
-##Getting Started
+#Getting Started
 ```shell
 git clone https://github.com/szech696/swarm && cd swarm
 chmod 755 swarm		
