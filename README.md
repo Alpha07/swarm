@@ -15,7 +15,6 @@
 * Easy to inherit from to create different types of bruteforcing tools
 
 ##Getting Started
-To use, you must first give the script execute permissions, via
 ```shell
 git clone https://github.com/szech696/swarm && cd swarm
 chmod 755 swarm		
