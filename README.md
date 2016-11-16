@@ -28,13 +28,13 @@ pip install -U requests[socks]
 pip install pexpect
 apt-get install tor
 ``` 
-###Usage
+##Usage
 
-####For all options
+###For all options
 ```shell
 ./swarm --help
 ``` 
-####Using on Damn Vulnerable Web App
+###Using on Damn Vulnerable Web App
 ```shell
 ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
