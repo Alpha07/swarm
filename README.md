@@ -41,6 +41,7 @@ apt-get install tor
 ##Inheritence Example - FTPHive
 ```python
 from hive import Hive
+from ftplib import FTP
 
 # class: FTPHive
 # description: Hive used to brute-force FTP Logins
