@@ -78,8 +78,6 @@ class FTPHive(Hive):
         def setup(self):
 		# Must call parent object's setup
                 Hive.setup(self)
-		# Setting Post Exploit handle
-		self.setOnSuccessHandle(self.post_exploit)
 
 	# function: post_exploit
 	# param: credential 	- Must take a credential object
@@ -92,11 +90,12 @@ class FTPHive(Hive):
 
 threadCount = 4
 ftp_bruteforce = FTPHive()
-ftp_bruteforce.target = 'ftp_server_address'		# specify the target 
-ftp_bruteforce.usernameFile = 'usernames.txt'		# the username file to use
-ftp_bruteforce.passwordFile = 'passwords.txt'		# the password file to use
-ftp_bruteforce.verbose = True				# verbose output
-ftp_bruteforce.setup()					# setup must be called before start, and after username/usernameFile, passwordFile, and target have been set
-ftp_bruteforce.start(threadCount)			# starts the bruteforcing task
+ftp_bruteforce.target = 'ftp_server_address'			# specify the target 
+ftp_bruteforce.usernameFile = 'usernames.txt'			# the username file to use
+ftp_bruteforce.passwordFile = 'passwords.txt'			# the password file to use
+ftp_bruteforce.verbose = True					# verbose output
+ftp_bruteforce.setOnSuccessHandle(ftp_bruteforce.postExploit)	# Normally you would just do this in setup, but for demonstration purposes
+ftp_bruteforce.setup()						# setup must be called before start, and after username/usernameFile, passwordFile, and target have been set
+ftp_bruteforce.start(threadCount)				# starts the bruteforcing task
 ```
 
