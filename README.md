@@ -27,7 +27,48 @@ sudo ./swarm --help
 ```shell
 sudo ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
-## DEPENDENCIES
+##Inheritence Example - FTPHive
+```python
+from hive import Hive
+
+# class: FTPHive
+# description: Hive used to brute-force FTP Logins
+class FTPHive(Hive):
+        ftp = None
+        def __init__(self):
+                Hive.__init__(self)
+
+
+        # function: attemptLogin        - Overriden
+        # param: credential             - The credential to attempt a login with
+        # return: Boolean               - True if Success | False if Failure
+        # description: This function is responsible for attempting a login with the specified credential
+        def attemptLogin(self, credential):
+                success = False
+                Hive.attemptLogin(self, credential)
+                username = credential.username
+                password = credential.password
+                host = credential.host
+                try:
+                        self.ftp = FTP(host)
+                        result = self.ftp.login(username,password)
+                        # If result then this was a successful login
+                        if result:
+                                success = True
+                        self.ftp.close()
+                except:
+                        pass
+                return success
+
+
+        # function: setup
+        # description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
+        def setup(self):
+                Hive.setup(self)
+
+```
+
+##Installing Dependencies 
 ```shell
 pip install bitarray
 pip install requests
