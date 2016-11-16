@@ -50,7 +50,6 @@ class FTPHive(Hive):
         def __init__(self):
                 Hive.__init__(self)
 
-
         # function: attemptLogin        - Overriden
         # param: credential             - The credential to attempt a login with
         # return: Boolean               - True if Success | False if Failure
