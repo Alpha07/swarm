@@ -76,9 +76,6 @@ class FTPHive(Hive):
         def setup(self):
                 Hive.setup(self)
 
-	# function: post_exploit
-	# param: credential 	- Must take a credential object
-	# description: Example of a post_exploit handle, you must use set it via: self.setOnSuccessHandle(self.post_exploit)
 	def post_exploit(self,credential):
 		# -------- Do Something ----------
 		# Such as display a custom login message
