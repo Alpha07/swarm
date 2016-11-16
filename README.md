@@ -15,15 +15,27 @@
 * Easy to inherit from to create different types of bruteforcing tools
 
 #Getting Started
+To use, first clone the github repo, and then give swarm execute permissions
 ```shell
 git clone https://github.com/szech696/swarm && cd swarm
 chmod 755 swarm		
 ```	
-For all options
+##Installing Dependencies 
+```shell
+pip install bitarray
+pip install requests
+pip install -U requests[socks]
+pip install pexpect
+apt-get install tor
+```
+``` 
+###Usage
+
+####For all options
 ```shell
 ./swarm --help
 ``` 
-##Basic example of how to use on Damn Vulnerable Web App
+####Using on Damn Vulnerable Web App
 ```shell
 ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
