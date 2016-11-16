@@ -6,7 +6,7 @@
 
 
 #About Swarm 
-**Swarm is a Bruteforcing tool for bruteforcing html logins**
+**Swarm is a Bruteforcing pentesting tool for bruteforcing html logins**
 ###Some Notable Features
 * Multi-Threaded
 * Randomized user agents
