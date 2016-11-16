@@ -41,7 +41,7 @@ apt-get install tor
 ##Using Hive to Develop New Tools 
 Hive makes developing new bruteforcing tools a breeze! The following is an example of a FTP bruteforcer
 ```python
-from hive import Hive
+from pythonlib.hive import Hive
 from ftplib import FTP
 
 # class: FTPHive
