@@ -77,6 +77,16 @@ class FTPHive(Hive):
         # description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
         def setup(self):
                 Hive.setup(self)
+		self.setOnSuccessHandle(self.post_exploit)
+
+	# function: post_exploit
+	# param: credential 	- Must take a credential object
+	# description: Example of a post_exploit handle, you must use set it via: self.setOnSuccessHandle(self.post_exploit)
+	def post_exploit(self,credential):
+		# -------- Do Something ----------
+		# Such as display a custom login message
+		# Store credentials in a Database, etc.
+		exit()	
 
 threadCount = 4
 ftp_bruteforce = FTPHive()
