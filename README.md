@@ -10,8 +10,8 @@
 ##Some Notable Features
 * Multi-Threaded
 * Randomized user agents
-* Supports TOR
-* By-pass logins via SQL Injections
+* Able to tunnel requests through tor, just use --tor option
+* Able to by-pass logins via SQL Injections if option is specified
 * Easy to inherit from to create different types of bruteforcing tools
 
 #Getting Started
