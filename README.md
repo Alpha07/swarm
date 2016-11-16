@@ -13,6 +13,7 @@
 * Supports TOR
 * By-pass logins via SQL Injections
 * Easy to inherit from to create different types of bruteforcing tools
+
 ##Getting Started
 To use, you must first give the script execute permissions, via
 ```shell
