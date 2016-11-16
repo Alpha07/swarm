@@ -10,8 +10,8 @@
 # SOMEONE ELSES ACCOUNT and/or PROPERTY. DO NOT USE ON A DOMAIN/PROPERTY THAT DOES NOT BELONG TO YOU, OR YOU DO NOT HAVE PERMISSION TO DO SO!
 # USE AT YOUR OWN RISK!! AND ABOVE ALL ELSE - ENJOY ;)
 #--------------------------------------------------------------------------------------------------------------------------
-from console import Console
-from hive import HttpHive
+from pythonlib.console import Console
+from pythonlib.hive import HttpHive
 import getopt, sys
 import random
 con = Console()
@@ -22,7 +22,7 @@ con = Console()
 # description: Displays the swarm logo, and other info
 def displayInfo(hive,checkTor=False):
 	logo = ''
-	for line in open('swarm-data','r').readlines():
+	for line in open('./data/swarm-data','r').readlines():
 		logo += line
 	logos = logo.split('(-$-)')
 	logo = random.choice(logos)

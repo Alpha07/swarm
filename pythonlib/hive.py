@@ -51,8 +51,7 @@ class Hive:
 		self.total_attempts = 0
 		# *NOTE* This is initializing self.sharedTriedCredentials filled with null values, with the size of self.MAX_HISTORY_SIZE
 		# CURRENTLY self.sharedTriedCredentials IS UNUSED
-		for count in range(self.MAX_HISTORY_SIZE):
-			self.sharedTriedCredentials.append(None)
+		for count in range(self.MAX_HISTORY_SIZE): self.sharedTriedCredentials.append(None)
 		self.historyIndex = 0
 		self.lastUpdated = time.time()
 		self.verbose = False
@@ -357,7 +356,7 @@ class HttpHive(Hive):
 		self.startTime = time.time()
 		if self.testSQLInjections == True:
 			threads = list()
-			self.SQLInjectionFile = 'sql-inject.json'
+			self.SQLInjectionFile = './data/sql-inject.json'
 			self.__loadLoginSQLInjection__()
 			credlists = list()
 			if len(self.SQLInjectionCredentialList) > workers:
