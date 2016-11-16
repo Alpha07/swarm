@@ -87,11 +87,3 @@ ftp_bruteforce.setup()					# setup must be called before start, and after userna
 ftp_bruteforce.start(threadCount)			# starts the bruteforcing task
 ```
 
-##Installing Dependencies 
-```shell
-pip install bitarray
-pip install requests
-pip install -U requests[socks]
-pip install pexpect
-apt-get install tor
-```
