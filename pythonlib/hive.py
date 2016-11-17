@@ -193,7 +193,7 @@ class Hive:
 				elif self.attemptLogin(credential):
 					con = Console()
 					message = con.getTimeString() 
-					message += con.format(" Login was Successful!!! ",['green','bold'])
+					message += con.format(" [+] Login was Successful!!! ",['green','bold'])
 					message += "username: %s password: %s "%(con.format(credential.username,['green','bold']),
 						con.format(credential.password,['green','bold']))
 					print(message)
@@ -203,7 +203,7 @@ class Hive:
 			with self.logLock:
 				credential.wasSuccess = False
 				message = con.getTimeString()
-				message += con.format(' Authentication Failure.. ',['red'])
+				message += con.format(' [x] Authentication Failure.. ',['red'])
 				message += 'username: %s password: %s'%(con.format(credential.username,['bold','red']),
 					con.format(credential.password,['bold','red']))
 				if self.verbose:
@@ -526,7 +526,7 @@ class HttpHive(Hive):
 		if self.attemptLogin(credential):
 			con = Console()
 			message = con.getTimeString()
-			message += con.format(" Login was Successful!!! ",['green','bold'])
+			message += con.format(" [+] Login was Successful!!! ",['green','bold'])
 			message += "username: %s password: %s "%(con.format(credential.username,['green','bold']),con.format(credential.password,['green','bold']))
 			print(message)
 		exit()
