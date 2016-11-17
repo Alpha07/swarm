@@ -44,7 +44,7 @@ class Hive:
 		self.historyIndex = 0
 		self.lastUpdated = time.time()
 		self.verbose = False
-		useTor = False
+		self.useTor = False
 		self.logLock = threading.Lock()
 
 	# function: start
