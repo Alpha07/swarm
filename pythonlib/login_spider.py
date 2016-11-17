@@ -3,6 +3,7 @@ from console import Console
 import re
 from threading import Lock
 from time import time
+from message import Message
 
 # class: LoginSpider
 # description: This spider is responsible for finding logins on a domain, and stores them to: login_urls
@@ -14,7 +15,7 @@ class LoginSpider(Widow):
 	login_urls = None
 	lastUpdate = None
 	updateTime = None
-	console = Console()
+	message = Message()
 	statsLock = None
 	
 	def __init__(self,depth):
@@ -48,12 +49,12 @@ class LoginSpider(Widow):
 			self.lastUpdate = 0
 		if (time()-self.lastUpdate) > self.updateTime:
 			self.lastUpdate = time()
-			timeString = self.console.format(self.console.getTimeString(),['white'])
-			pagesCrawled = self.console.format(str(self.crawledPages),['white'])	
+			timeString = self.message.format(self.message.getTimeString(),['white'])
+			pagesCrawled = self.message.format(str(self.crawledPages),['white'])	
 			totalLoginsFound = len(self.login_urls)
-			totalLoginsFound = self.console.format(str(totalLoginsFound),['green'])
-			message = timeString
-			message += self.console.format(" pages-crawled: %s",['dim'])%pagesCrawled
-			message += self.console.format(" total-logins-forms-found: %s",['dim'])%totalLoginsFound
+			totalLoginsFound = self.message.format(str(totalLoginsFound),['green'])
+			message = self.message.infoMessage("Statistics ")
+			message += self.message.format("pages-crawled: %s",['dim'])%pagesCrawled
+			message += self.message.format(" total-logins-forms-found: %s",['dim'])%totalLoginsFound
 			with self.statsLock:
 				print(message)

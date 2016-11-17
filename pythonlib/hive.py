@@ -7,6 +7,7 @@ from console import Console
 import random
 from ftplib import FTP
 import json
+from message import Message
 try:
 	import pexpect
 except:
@@ -32,6 +33,7 @@ class Hive:
 	__onSuccessHandle__ = None
 	target = None
 	logLock = None
+	message = Message()
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
@@ -106,7 +108,6 @@ class Hive:
 	# param: success
 	# description: Responsible for displaying Login Success/Failure messages, and calls __onSuccessHandle__ for special post exploits if any
 	def __displayMessage__(self, credential, success):
-		con = Console()
 		# Display Login on Success message
 		if success:
 			self.isFinished = True
@@ -118,33 +119,28 @@ class Hive:
 				# Else just display login success message and exit
 				# Ensuring login was a success
 				elif self.attemptLogin(credential):
-					con = Console()
-					message = con.getTimeString() 
-					message += con.format(" [+] Login was Successful!!! ",['green','bold'])
-					message += "username: %s password: %s "%(con.format(credential.username,['green','bold']),
-						con.format(credential.password,['green','bold']))
+					message = self.message.successMessage("Authentication Success ")
+					message += "username: %s "%self.message.format(credential.username,['green','bold'])
+					message += "password: %s "%self.message.format(credential.password,['green','bold'])
 					print(message)
 					exit()
 		# Display Authentication Failure message
 		else:
 			with self.logLock:
 				credential.wasSuccess = False
-				message = con.getTimeString()
-				message += con.format(' [x] Authentication Failure.. ',['red'])
-				message += 'username: %s password: %s'%(con.format(credential.username,['bold','red']),
-					con.format(credential.password,['bold','red']))
+				message = self.message.failedMessage("Authentication Failure ")
+				message += "username: %s "%self.message.format(credential.username,['red','bold'])
+				message += "password: %s "%self.message.format(credential.password,['red','bold'])
 				if self.verbose:
 					print(message)	
 		# if elapsed time is since last 'show statistics' is longer then self.UPDATE_TIME
 		# then display statistics
 		if (time.time() - self.lastUpdated) > self.UPDATE_TIME:
 				statistics = self.getStatistics()
-				statMessage = ''
-				statMessage = con.getTimeString()
-				statMessage += con.format(' [*] Attack Statistics ',['bold','yellow'])
+				message = self.message.infoMessage("Attack Statistics ")
 				for key in statistics.keys():
-					statMessage += con.format(key,['dim']) + con.format(': '+statistics[key],['bold']) + ' '
-				print(statMessage)
+					message += self.message.format(key,['dim']) + self.message.format(': '+statistics[key],['bold']) + ' '
+				print(message)
 
 	# function: run
 	# description: This function should never be overriden. This is responsible for synchronization between workers.
@@ -469,10 +465,8 @@ class HttpHive(Hive):
 	def postExploit(self,credential):
 		# Ensuring success, *NOTE* currently there is a threading bug that is overwriting parts of memory?
 		if self.attemptLogin(credential):
-			con = Console()
-			message = con.getTimeString()
-			message += con.format(" [+] Login was Successful!!! ",['green','bold'])
-			message += "username: %s password: %s "%(con.format(credential.username,['green','bold']),con.format(credential.password,['green','bold']))
+			message = self.message.successMessage("Authentication Success ")
+			message += "username: %s password: %s "%(self.message.format(credential.username,['green','bold']),self.message.format(credential.password,['green','bold']))
 			print(message)
 		exit()
 	

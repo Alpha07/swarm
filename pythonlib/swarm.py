@@ -68,9 +68,11 @@ class Swarm(object):
 	def getCrawlingMessage(self):
 		message = ""
 		messageDict = {	"Depth":self.depth,
-				"Using-Tor":self.checkIfTorEnabled(),
+				"Using-Tor":False,
 				"Threads":self.threads}
 		message = self.getLogo()
+		if self.useTor:
+			messageDict["Using-Tor"] = self.checkIfTorEnabled()
 		message += self.console.format('Author: %s\n',['dim'])%self.console.format(self.author,['magenta'])
 		message += self.console.format('Target: %s\n',['dim'])%self.console.format(self.target,['yellow'])	
 		for key in sorted(messageDict.keys()):
