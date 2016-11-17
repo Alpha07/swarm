@@ -5,7 +5,6 @@ from threading import Thread
 import time
 from console import Console
 import random
-from bloomfilter import BloomFilter
 from ftplib import FTP
 import json
 try:
@@ -18,47 +17,35 @@ except:
 class Hive:
 	useTor = None
 	UPDATE_TIME = 10
-	MAX_HISTORY_SIZE = 400		# *NOTE* Currently Unused
-	historyIndex = None 		# *NOTE* Currently Unused
 	sharedUsernameList = None
 	sharedPasswordList = None
 	usernameFile = None
 	passwordFile = None
 	username = None
-	sharedTriedCredentials = None
 	isFinished = None
 	workerList = None
 	passListLength = None
 	startTime = None
-	threadLock = None
 	total_attempts = None
 	lastUpdated = None
 	verbose = None
 	__onSuccessHandle__ = None
-	bloomfilter = None		# *NOTE* only used if username is not None, Insures passwords were only used once with the specific username
 	target = None
 	logLock = None
-	attemptLock = None
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
 	def __init__(self):
 		self.sharedUsernameList = list()
 		self.sharedPasswordList = list()
-		self.sharedTriedCredentials = list()
 		self.workerList = list()
 		self.isFinished = False	
-		self.threadLock = threading.Lock()
 		self.total_attempts = 0
-		# *NOTE* This is initializing self.sharedTriedCredentials filled with null values, with the size of self.MAX_HISTORY_SIZE
-		# CURRENTLY self.sharedTriedCredentials IS UNUSED
-		for count in range(self.MAX_HISTORY_SIZE): self.sharedTriedCredentials.append(None)
 		self.historyIndex = 0
 		self.lastUpdated = time.time()
 		self.verbose = False
 		useTor = False
 		self.logLock = threading.Lock()
-		self.attemptLock = threading.Lock()
 
 	# function: start
 	# param: workers(int)			- The number of threads to create
@@ -66,31 +53,21 @@ class Hive:
 	def start(self, workers=1):
 		if not self.startTime:
 			self.startTime = time.time()
-		for count in range(workers):
-			thread = Thread(target=self.run, args=())
-			self.workerList.append(thread)
+		if not self.username:
+			usernameLists = self.__splitList__(self.sharedUsernameList,workers)
+			for usernames in usernameLists:
+				thread = Thread(target=self.run, args=(usernames,))
+				self.workerList.append(thread)
+		else:
+			passwordLists = self.__splitList__(self.sharedPasswordList,workers)
+			for passwords in passwordLists:
+				thread = Thread(target=self.run, args=(None,passwords,))
+				self.workerList.append(thread)
 		for worker in self.workerList:
 			worker.start()
 		for worker in self.workerList:
 			worker.join()
 
-	# function: getNextUsername - Generator
-	# yield: str	- the next username
-	# description: yields the next username available
-	def getNextUsername(self):
-		username = None
-		for count in range(len(self.sharedUsernameList)):
-			# Ensuring thread safety
-			while self.threadLock.locked():
-				time.sleep(0.05)
-			self.threadLock.acquire()
-			try:
-				username = self.sharedUsernameList.pop()
-			except IndexError or TypeError:
-				pass
-			finally:
-				self.threadLock.release()
-				yield username[0]
 
 	# function: __populateLists__
 	# description: Populates sharedUsernameList, and sharedPasswordList 
@@ -109,62 +86,12 @@ class Hive:
 		self.sharedUsernameList = sorted(self.sharedUsernameList,reverse=True)
 		self.sharedPasswordList = sorted(self.sharedPasswordList,reverse=True)
 
-	# function: getNextPassword 
-	# return: (str) | (None) - if last index
-	# description: password at position index
-	def getNextPassword(self):	
-		password = None
-		if not self.username:
-			for password in self.sharedPasswordList:
-				yield password[0]
-		else:
-			for index in range(len(self.sharedPasswordList)):
-				# Ensuring thread Safety
-				while self.threadLock.locked():
-					time.sleep(0.05)
-				with self.threadLock:
-					try:
-						password = self.sharedPasswordList.pop()
-					except IndexError or TypeError:
-						pass
-					finally:
-						yield password[0]		
-
-	# function: getNextCredResults - *NOTE* Not currently implemented
-	# yield: Credential
-	# description: Yields the next credential that was used to attempt a login
-	def getNextCredResults(self):
-		while not self.isFinished:
-			for credential in self.sharedTriedCredentials:
-				if credential is not None:
-					yield credential
 
 	# function: setup - Override
 	# description: Each object that inherits from Hive should have their own version of this.. Call super objects setup from within
 	#	custom Hive object's setup()
 	def setup(self):
 		self.__populateLists__()
-		if self.username:
-			self.bloomfilter = BloomFilter(1000000000)
-
-	# function: depositCredResult - *NOTE* Not currently implemented
-	# param: credential 	- The credential that was used to attempt a login
-	# description: Deposits the credential that was used to attempt a login
-	def depositCredResult(self, credential):
-		isDepositing = True
-		while isDepositing:
-			if not self.historyIndex < self.MAX_HISTORY_SIZE:
-				self.historyIndex = 0	
-			if self.sharedTriedCredentials[self.historyIndex]:
-				if not self.sharedTriedCredentials[self.historyIndex].wasSuccess:
-					self.sharedTriedCredentials[self.historyIndex] = credential
-					self.historyIndex += 1
-				else: 
-					self.historyIndex += 1
-			else:
-				self.sharedTriedCredentials[self.historyIndex] = credential
-				self.historyIndex += 1
-				isDepositing = False
 
 	# function: attemptLogin - Override 	
 	# param: Credential	- The credentials to attempt a login with
@@ -214,7 +141,7 @@ class Hive:
 				statistics = self.getStatistics()
 				statMessage = ''
 				statMessage = con.getTimeString()
-				statMessage += con.format(' Attack Statistics ',['bold','yellow'])
+				statMessage += con.format(' [*] Attack Statistics ',['bold','yellow'])
 				for key in statistics.keys():
 					statMessage += con.format(key,['dim']) + con.format(': '+statistics[key],['bold']) + ' '
 				print(statMessage)
@@ -222,10 +149,12 @@ class Hive:
 	# function: run
 	# description: This function should never be overriden. This is responsible for synchronization between workers.
 	# 	This function also displays to the screen the results. Called from self.start() 
-	def run(self):
+	def run(self,usernames,passwords=None):
 		if not self.username:
-			for username in self.getNextUsername():
-				for password in self.getNextPassword():
+			for username in usernames:
+				username = username[0] 
+				for password in self.sharedPasswordList:
+					password = password[0]
 					if not self.isFinished:
 						credential = Credential(username,password,self.target)
 						success = self.attemptLogin(credential)
@@ -235,15 +164,12 @@ class Hive:
 		# A specific username was specified, using this username instead of usernames from usernameFile
 		else:
 			try:
-				for password in self.getNextPassword():
+				for password in passwords:
+					password = password[0]
 					if not self.isFinished:
-						# Ensuring the password is used only once with this username
-						# -- Bloomfilter has static lookup speed, regardless of list size
-						if not self.bloomfilter.inArray(password):
-							credential = Credential(self.username,password,self.target)
-							success = self.attemptLogin(credential)
-							self.__displayMessage__(credential, success)
-							self.bloomfilter.append(password)	
+						credential = Credential(self.username,password,self.target)
+						success = self.attemptLogin(credential)
+						self.__displayMessage__(credential, success)
 					# Finished, there was a successful login
 					else:
 						exit()
@@ -273,6 +199,25 @@ class Hive:
 	#	the magic of actually using TOR.
 	def setupTOR(self):
 		pass
+
+	# function: __splitList__
+	# param: []		- array to split
+	# param: splitNum  	- how many arrays to create from the orginal
+	# return: [[]]		- 2 dimensional array
+	# description: Attempts to split the array into the specified number of arrays, will return one more if the split was not even.
+	def __splitList__(self,listToSplit,splitNum):
+		lists = list()
+		size = len(listToSplit)/splitNum
+		endIndex = 0
+		for index in range(splitNum):
+			startIndex = index*size
+			endIndex = startIndex+size	
+			lists.append(listToSplit[startIndex:endIndex])
+		if endIndex%len(listToSplit) != 0:
+			lists.append(listToSplit[endIndex:])
+		return lists
+	
+
 
 # class: Credential
 # description: A credential used to attempt a login
@@ -614,8 +559,7 @@ class HttpHive(Hive):
 	def __attemptSQLInjection__(self,credlist):
 		for credential in credlist:
 			result = self.attemptLogin(credential)
-			with self.attemptLock:
-				self.__displayMessage__(credential,result)
+			self.__displayMessage__(credential,result)
 			if self.isFinished == False:
 				self.isFinished = result
 			else:
@@ -624,24 +568,6 @@ class HttpHive(Hive):
 			if self.isFinished == True:
 				exit()
 				break
-
-	# function: __splitList__
-	# param: []		- array to split
-	# param: splitNum  	- how many arrays to create from the orginal
-	# return: [[]]		- 2 dimensional array
-	# description: Attempts to split the array into the specified number of arrays, will return one more if the split was not even.
-	def __splitList__(self,listToSplit,splitNum):
-		lists = list()
-		size = len(listToSplit)/splitNum
-		endIndex = 0
-		for index in range(splitNum):
-			startIndex = index*size
-			endIndex = startIndex+size	
-			lists.append(listToSplit[startIndex:endIndex])
-		if endIndex%len(listToSplit) != 0:
-			lists.append(listToSplit[endIndex:])
-		return lists
-	
 
 # class: SSHHive
 # description: Hive used to brute-force ssh logins
