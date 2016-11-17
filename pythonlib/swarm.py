@@ -273,9 +273,12 @@ class Swarm(object):
 	# function: checkVersion
 	# description: Checks for new versions of swarm, notifies the user if one is available
 	def checkVersion(self):
-		response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
-		if self.UPDATE_REGEX.search(response.text):
-			version = self.UPDATE_REGEX.findall(response.text)[0]
-			if float(version) > self.VERSION:
-				message = self.successMessage("Version %s available, update at https://github.com/szech696/swarm/\n"%version)
-				print(message)
+		try:
+			response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
+			if self.UPDATE_REGEX.search(response.text):
+				version = self.UPDATE_REGEX.findall(response.text)[0]
+				if float(version) > self.VERSION:
+					message = self.successMessage("Version %s available, update at https://github.com/szech696/swarm/\n"%version)
+					print(message)
+		except:
+			pass
