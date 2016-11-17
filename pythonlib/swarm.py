@@ -127,7 +127,7 @@ class Swarm(object):
 					self.killSignal = True
 				if key == 'tor-message':
 					try:
-						message += validateDict[key] + '\n'
+						message += validateDict[key] 
 					except TypeError:
 						pass
 		if self.killSignal:	
