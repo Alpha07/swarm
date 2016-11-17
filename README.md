@@ -12,6 +12,7 @@
 * Randomized user agents
 * Able to tunnel requests through tor, just use --tor option
 * Able to by-pass logins via SQL Injections if option is specified
+* Crawl the domain to discover login forms
 * Easy to inherit from Hive to create different types of bruteforcing tools
 
 #Getting Started

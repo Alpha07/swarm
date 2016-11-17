@@ -1,5 +1,7 @@
 #! /usr/bin/python
-
+from pythonlib.swarm import Swarm
+import sys
+import getopt
 #--------------------------------------------------------------------------------------------------------------------------
 # Author: Szech696
 # Desciption: SWARM is a bruteforce utility for HTML login forms. 
@@ -10,58 +12,8 @@
 # SOMEONE ELSES ACCOUNT and/or PROPERTY. DO NOT USE ON A DOMAIN/PROPERTY THAT DOES NOT BELONG TO YOU, OR YOU DO NOT HAVE PERMISSION TO DO SO!
 # USE AT YOUR OWN RISK!! AND ABOVE ALL ELSE - ENJOY ;)
 #--------------------------------------------------------------------------------------------------------------------------
-from pythonlib.console import Console
-from pythonlib.hive import HttpHive
-import getopt, sys
-import random
-con = Console()
 
-# function: displayLogo
-# param: Hive	  - hive object
-# param: Boolean  - Should check TOR before it continues. If True and TOR is not setup properly then exit. 
-# description: Displays the swarm logo, and other info
-def displayInfo(hive,checkTor=False):
-	logo = ''
-	for line in open('./data/swarm-data','r').readlines():
-		logo += line
-	logos = logo.split('(-$-)')
-	logo = random.choice(logos)
-	tor = False
-	method = ''
-	if hive.checkTor():
-		tor = True
-	if hive.form_method == 0:
-		method = 'POST'
-	else:
-		method = 'GET'
-	
-	message = con.format(logo,['yellow','bold'])
-	message += '\n'
-	message += con.format('SWARM\n',['magenta'])
-	message += con.format('Author: %s\n',['dim'])%(con.format('Szech696',['white']))
-	message += con.format('Target: %s\n',['dim'])%(con.format(hive.target,['white']))
-	message += con.format('Method: %s\n',['dim'])%(con.format(method,['white']))
-	message += con.format('Base Payload: %s\n',['dim'])%(con.format(str(hive.examplePayload),['white']))
-	if not hive.username:
-		message += con.format('Username File: %s\n',['dim'])%(con.format(hive.usernameFile,['white']))
-	else:
-		message += con.format('Username: %s\n',['dim'])%(con.format(hive.username,['white']))
-	message += con.format('Password File: %s\n',['dim'])%(con.format(hive.passwordFile,['white']))
-	if hive.testSQLInjections:
-		message += con.format('Attempt Login with SQL-injection: %s\n',['dim'])%(con.format(str(hive.testSQLInjections),['green','bold']))
-	else:
-		message += con.format('Attempt Login with SQL-injection: %s\n',['dim'])%(con.format(str(hive.testSQLInjections),['red','bold']))
-	if tor:
-		message += con.format('Using Tor: %s\n',['dim'])%(con.format(str(tor),['green','bold']))
-	else:
-		message += con.format('Using Tor: %s\n',['dim'])%(con.format(str(tor),['red','bold']))
-	print(message)
-	if not tor:
-		if checkTor:
-			print(con.getTimeString() + con.format(' Something went wrong with TOR did you specify: --tor? Is TOR properly installed? You could also '+
-								'try: sudo pip install -U requests[socks]',['red']))
-			exit()
-	
+
 # function: usage
 # description: Displays Example message and exits
 def usage():
@@ -74,73 +26,85 @@ def usage():
 # function: help
 # description: Displays the help message and exits
 def showhelp():
-	print('\t--url=<argument>		The URL where the login form is located')
-	print('\t--username=<argument>		Use a specific username for each attempt (overrides --user-file option)')
-	print('\t--user-file=<argument>		The username file to use with swarm')
-	print('\t--pass-file=<argument>		The password file to use with swarm')
-	print('\t--threads=<argument>		The number of threads to run swarm with. NOTE depending on the CPU, to many threads can hurt performance')
-	print('\t--verbose			Verbose output')
-	print('\t--update-time=<argument>	The total time in seconds to show swarm statistics')	
-	print('\t--tor				Use tor with swarm')
-	print('\t--check-tor			To confirm you are using TOR before swarm continues.')
-	print('\t--sql-inject			Try to bypass login with SQL Injections.')
+	print('\t--url=<ARGUMENT>			The URL where the login form is located')
+        print('\t--username=<ARGUMENT>			Use a specific username for each attempt (overrides --user-file option)')
+        print('\t--user-file=<ARGUMENT>			The username file to use with swarm')
+        print('\t--pass-file=<ARGUMENT>			The password file to use with swarm')
+        print('\t--threads=<ARGUMENT>			The number of threads to run swarm with. NOTE depending on the CPU, to many threads can hurt performance')
+        print('\t--verbose				Verbose output')
+	print('\t--update-time=<ARGUMENT>		Total time in seconds between showing statistics')
+        print('\t--tor					Use tor with swarm')
+        print('\t--check-tor				To confirm you are using TOR before swarm continues.')
+        print('\t--sql-inject				Try to bypass login with SQL Injections.')
+        print('\t--crawl=<ARGUMENT>			Crawls the domain for login forms')
 	usage()
 
 # function: main
 # param: argv		- System arguments
 # description: Main function of swarm
 def main(argv):
-	checkTor = False
-	total_threads = 1
+	swarm = None
+	target = None
+	username = None
+	usernameFile = None
+	passwordFile = None
+	threads = 1
+	verbose = False
+	updateTime = None
+	checkTor = False	
+	tor = False
+	sqlInject = False
+	crawl = False
+	depth = None
 	try:
-		opts, args = getopt.getopt(argv[1:],'' ,['help','url=','user-file=','pass-file=','threads=','verbose','update-time=','tor','check-tor', 'username=','sql-inject'])	
+		opts, args = getopt.getopt(argv[1:],'' ,['help',
+							 'url=',
+							 'user-file=',
+							 'pass-file=',
+							 'threads=',
+							 'verbose',
+							 'update-time=',
+							 'tor',
+							 'check-tor', 
+							 'username=',
+							 'sql-inject',
+							 'crawl='])	
+	# Invalid Option
 	except getopt.GetoptError as err:
 		print(str(err))
 		usage()
-	hive = HttpHive()
+
 	for opt, arg in opts:
 		if opt == '--help':
 			showhelp()
 		if opt == '--url':
-			hive.target = arg
+			target = arg	
 		if opt == '--username':
-			hive.username = arg
+			username = arg	
 		if opt == '--user-file':
-			hive.usernameFile = arg
+			usernameFile = arg	
 		if opt == '--pass-file':
-			hive.passwordFile = arg
+			passwordFile = arg	
 		if opt == '--threads':
-			total_threads = int(arg)
+			threads = int(arg)	
 		if opt == '--verbose':
-			hive.verbose = True	
+			verbose = True	
 		if opt == '--update-time':
-			hive.UPDATE_TIME = int(arg)
+			updateTime = int(arg)	
 		if opt == '--check-tor':
-			checkTor = True
+			checkTor = True	
 		if opt == '--tor':
-			hive.useTor = True
+			tor = True	
 		if opt == '--sql-inject':
-			hive.testSQLInjections = True
-	# - must include a username file or will display error message and exit
-	if not hive.usernameFile and not hive.username:
-		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing username file..')	
-		print('--help 		for all options and arguments')
-		usage()
-	# - must include a password file or will display error message and exit
-	if not hive.passwordFile:
-		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing password file..')	
-		print('--help 		for all options and arguments')
-		usage()
-	# - must include a url to target or will display error message and exit
-	if hive.target:
-		hive.setup()
-		displayInfo(hive,checkTor)
-		hive.start(total_threads)
-	# - starting swarm on target
-	else:
-		print(con.getTimeString()+con.format(' WARNING!!! ',['red','bold'])+'Missing target..')	
-		print('--help 		for all options and arguments')
-		usage()
+			sqlInject = True	
+		if opt == '--crawl':
+			crawl = True	
+			depth = int(arg)
 
+	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime)
+	if crawl:
+		swarm.startCrawling()
+	else:
+		swarm.startBruteforcing()
 if __name__ == "__main__":
 	main(sys.argv)

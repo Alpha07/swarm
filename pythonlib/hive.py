@@ -38,6 +38,7 @@ class Hive:
 	bloomfilter = None		# *NOTE* only used if username is not None, Insures passwords were only used once with the specific username
 	target = None
 	logLock = None
+	attemptLock = None
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
@@ -57,6 +58,7 @@ class Hive:
 		self.verbose = False
 		useTor = False
 		self.logLock = threading.Lock()
+		self.attemptLock = threading.Lock()
 
 	# function: start
 	# param: workers(int)			- The number of threads to create
@@ -187,7 +189,8 @@ class Hive:
 				if self.__onSuccessHandle__:
 					self.__onSuccessHandle__(credential)
 				# Else just display login success message and exit
-				else:
+				# Ensuring login was a success
+				elif self.attemptLogin(credential):
 					con = Console()
 					message = con.getTimeString() 
 					message += con.format(" Login was Successful!!! ",['green','bold'])
@@ -392,7 +395,10 @@ class HttpHive(Hive):
 	def __findFields__(self, form_code):
 		fields = list()
                 payload = dict()
-                fields = self.FIELD_REGEX.findall(form_code)
+		try:
+                	fields = self.FIELD_REGEX.findall(form_code)
+		except: 
+			return None
 		for array in fields:
 			for field in array:
        		                name = ""
@@ -496,7 +502,8 @@ class HttpHive(Hive):
 		login = self.__getLoginForm__(forms)
 		self.form_method = self.__checkLoginType__(forms)
 		self.basePayload = self.__findFields__(login)
-		self.setFailedBaseline(self.basePayload)
+		if self.basePayload:
+			self.setFailedBaseline(self.basePayload)
 		# Setting handle for post exploitation, to self.postExploit
 		self.setOnSuccessHandle(self.postExploit)
 		if self.useTor:
@@ -515,11 +522,13 @@ class HttpHive(Hive):
 	# In this function you can save the credential to a Database, and continue/quit or whatever
 	# You don't need the same signature for every post exploit function, however you do need to use: self.setOnSuccessHandle(somefunction) to set the handle
 	def postExploit(self,credential):
-		con = Console()
-		message = con.getTimeString()
-		message += con.format(" Login was Successful!!! ",['green','bold'])
-		message += "username: %s password: %s "%(con.format(credential.username,['green','bold']),con.format(credential.password,['green','bold']))
-		print(message)
+		# Ensuring success, *NOTE* currently there is a threading bug that is overwriting parts of memory?
+		if self.attemptLogin(credential):
+			con = Console()
+			message = con.getTimeString()
+			message += con.format(" Login was Successful!!! ",['green','bold'])
+			message += "username: %s password: %s "%(con.format(credential.username,['green','bold']),con.format(credential.password,['green','bold']))
+			print(message)
 		exit()
 	
 	# function: checkTor
@@ -605,7 +614,8 @@ class HttpHive(Hive):
 	def __attemptSQLInjection__(self,credlist):
 		for credential in credlist:
 			result = self.attemptLogin(credential)
-			self.__displayMessage__(credential,result)
+			with self.attemptLock:
+				self.__displayMessage__(credential,result)
 			if self.isFinished == False:
 				self.isFinished = result
 			else:
