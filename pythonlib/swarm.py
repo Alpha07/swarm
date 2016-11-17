@@ -3,11 +3,13 @@ from hive import HttpHive
 from login_spider import LoginSpider
 import requests
 import random
+import re
 
 # class: Swarm
 # description: This is The main driving class of the swarm bruteforcer
 class Swarm(object):
 	VERSION = 0.02
+	UPDATE_REGEX = re.compile(r'VERSION.*\">([\d\.]+)') 
 	username = None
 	usernameFile = None
 	passwordFile = None
@@ -58,6 +60,7 @@ class Swarm(object):
 		self.killSignal = False
 		self.console = Console()
 		self.proxies = None
+		self.checkVersion()
 
 	# function: getCrawlingMessage
 	# return: str
@@ -121,7 +124,10 @@ class Swarm(object):
 					message += validateDict[key] + '\n'
 					self.killSignal = True
 				if key == 'tor-message':
-					message += validateDict[key] + '\n'
+					try:
+						message += validateDict[key] + '\n'
+					except TypeError:
+						pass
 		if self.killSignal:	
 			message += self.criticalSignal("There were errors exiting")
 			print(message)
@@ -168,7 +174,10 @@ class Swarm(object):
 		self.hive.proxies = self.proxies
 		self.hive.setup()	
 		message = self.getBruteforcingMessage()
-		message += validateDict['tor-message']
+		try:
+			message += validateDict['tor-message']
+		except TypeError:
+			pass
 		if self.killSignal:
 			message += self.criticalSignal("There were errors exiting")
 			print(message)
@@ -261,5 +270,12 @@ class Swarm(object):
 		successLog += self.console.format(' [+] %s'%message,['green','bold'])
 		return successLog
 	
+	# function: checkVersion
+	# description: Checks for new versions of swarm, notifies the user if one is available
 	def checkVersion(self):
-		pass
+		response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
+		if self.UPDATE_REGEX.search(response.text):
+			version = self.UPDATE_REGEX.findall(response.text)[0]
+			if float(version) > self.VERSION:
+				message = self.successMessage("Version %s available, update at https://github.com/szech696/swarm/\n"%version)
+				print(message)
