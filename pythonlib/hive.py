@@ -52,6 +52,7 @@ class Hive:
 	# function: start
 	# param: workers(int)			- The number of threads to create
 	# description: Starts the bruteforcing process
+	# *NOTE* need to account for less in the lists then theads
 	def start(self, workers=1):
 		if not self.startTime:
 			self.startTime = time.time()
@@ -202,6 +203,9 @@ class Hive:
 	# return: [[]]		- 2 dimensional array
 	# description: Attempts to split the array into the specified number of arrays, will return one more if the split was not even.
 	def __splitList__(self,listToSplit,splitNum):
+		# Ensuring that the split happens regardless of size
+		while splitNum > len(listToSplit):
+			splitNum /= 2
 		lists = list()
 		size = len(listToSplit)/splitNum
 		endIndex = 0
