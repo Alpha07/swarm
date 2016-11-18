@@ -59,12 +59,12 @@ class Hive:
 		if not self.username:
 			usernameLists = self.__splitList__(self.sharedUsernameList,workers)
 			for usernames in usernameLists:
-				thread = Thread(target=self.run, args=(usernames,))
+				thread = Thread(target=self.run, args=(sorted(usernames),))
 				self.workerList.append(thread)
 		else:
 			passwordLists = self.__splitList__(self.sharedPasswordList,workers)
 			for passwords in passwordLists:
-				thread = Thread(target=self.run, args=(None,passwords,))
+				thread = Thread(target=self.run, args=(None,sorted(passwords),))
 				self.workerList.append(thread)
 		for worker in self.workerList:
 			worker.start()
@@ -199,9 +199,9 @@ class Hive:
 
 	# function: __splitList__
 	# param: []		- array to split
-	# param: splitNum  	- how many arrays to create from the orginal
+	# param: int		- how many arrays to create from the orginal
 	# return: [[]]		- 2 dimensional array
-	# description: Attempts to split the array into the specified number of arrays, will return one more if the split was not even.
+	# description: Evenly disperses all the items of listToSplit, into specified number of arrays
 	def __splitList__(self,listToSplit,splitNum):
 		lists = list()
 		if len(listToSplit) > 1:
@@ -214,8 +214,16 @@ class Hive:
 				startIndex = index*size
 				endIndex = startIndex+size	
 				lists.append(listToSplit[startIndex:endIndex])
+			# Splitting the remaining items amoung the other arrays
 			if endIndex%len(listToSplit) != 0:
-				lists.append(listToSplit[endIndex:])
+				index = 0
+				for item in listToSplit[endIndex:]:
+					if index <= len(lists):
+						lists[index].append(item)
+						index += 1
+					else:						
+						lists[index].append(item)
+						index = 0
 		else:
 			lists.append(listToSplit)
 		return lists
