@@ -203,18 +203,21 @@ class Hive:
 	# return: [[]]		- 2 dimensional array
 	# description: Attempts to split the array into the specified number of arrays, will return one more if the split was not even.
 	def __splitList__(self,listToSplit,splitNum):
-		# Ensuring that the split happens regardless of size
-		while splitNum > len(listToSplit):
-			splitNum /= 2
 		lists = list()
-		size = len(listToSplit)/splitNum
-		endIndex = 0
-		for index in range(splitNum):
-			startIndex = index*size
-			endIndex = startIndex+size	
-			lists.append(listToSplit[startIndex:endIndex])
-		if endIndex%len(listToSplit) != 0:
-			lists.append(listToSplit[endIndex:])
+		if len(listToSplit) > 1:
+			# Ensuring that the split happens regardless of size
+			while splitNum > len(listToSplit):
+				splitNum /= 2
+			size = len(listToSplit)/splitNum
+			endIndex = 0
+			for index in range(splitNum):
+				startIndex = index*size
+				endIndex = startIndex+size	
+				lists.append(listToSplit[startIndex:endIndex])
+			if endIndex%len(listToSplit) != 0:
+				lists.append(listToSplit[endIndex:])
+		else:
+			lists.append(listToSplit)
 		return lists
 	
 
