@@ -234,7 +234,7 @@ class Hive:
 	# description: Displays the post statistics of this attack, to the screen 
 	def showPostStatisticsMessage(self):
 		elapsed = time.time() - self.startTime
-		print(self.message.infoMessage("Done in %d second(s), with %d attempts, and %d successful logins"%(elapsed, self.total_attempts, self.totalLogins)))
+		print(self.message.infoMessage("Done in %d second(s), with %d attempts, and %d successful login(s)"%(elapsed, self.total_attempts, self.totalLogins)))
 	
 
 
