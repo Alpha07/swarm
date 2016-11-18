@@ -8,7 +8,7 @@ import re
 # class: Swarm
 # description: This is The main driving class of the swarm bruteforcer
 class Swarm(object):
-	VERSION = 0.02
+	VERSION = 0.021
 	UPDATE_REGEX = re.compile(r'VERSION.*\">([\d\.]+)') 
 	username = None
 	usernameFile = None
@@ -60,7 +60,7 @@ class Swarm(object):
 		self.killSignal = False
 		self.console = Console()
 		self.proxies = None
-		self.checkVersion()
+#		self.checkVersion()
 
 	# function: getCrawlingMessage
 	# return: str
@@ -188,6 +188,7 @@ class Swarm(object):
 		self.hive.testSQLInjections = self.useSqlInjections
 		self.hive.verbose = self.verbose
 		self.hive.start(self.threads)	
+		self.hive.showPostStatisticsMessage()
 	
 	# function: checkTor
 	# return: Boolean
