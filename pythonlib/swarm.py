@@ -60,7 +60,7 @@ class Swarm(object):
 		self.killSignal = False
 		self.console = Console()
 		self.proxies = None
-#		self.checkVersion()
+		self.checkVersion()
 
 	# function: getCrawlingMessage
 	# return: str
