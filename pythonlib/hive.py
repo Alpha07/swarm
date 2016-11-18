@@ -34,6 +34,7 @@ class Hive:
 	target = None
 	logLock = None
 	message = Message()
+	totalLogins = None
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
@@ -47,12 +48,12 @@ class Hive:
 		self.lastUpdated = time.time()
 		self.verbose = False
 		self.useTor = False
+		self.totalLogins = 0
 		self.logLock = threading.Lock()
 
 	# function: start
 	# param: workers(int)			- The number of threads to create
 	# description: Starts the bruteforcing process
-	# *NOTE* need to account for less in the lists then theads
 	def start(self, workers=1):
 		if not self.startTime:
 			self.startTime = time.time()
@@ -120,6 +121,7 @@ class Hive:
 				# Else just display login success message and exit
 				# Ensuring login was a success
 				elif self.attemptLogin(credential):
+					self.totalLogins += 1
 					message = self.message.successMessage("Authentication Success ")
 					message += "username: %s "%self.message.format(credential.username,['green','bold'])
 					message += "password: %s "%self.message.format(credential.password,['green','bold'])
@@ -227,6 +229,12 @@ class Hive:
 		else:
 			lists.append(listToSplit)
 		return lists
+	
+	# function: showPostStatisticsMessage
+	# description: Displays the post statistics of this attack, to the screen 
+	def showPostStatisticsMessage(self):
+		elapsed = time.time() - self.startTime
+		print(self.message.infoMessage("Done in %d second(s), with %d attempts, and %d successful logins"%(elapsed, self.total_attempts, self.totalLogins)))
 	
 
 
@@ -479,7 +487,10 @@ class HttpHive(Hive):
 	# You don't need the same signature for every post exploit function, however you do need to use: self.setOnSuccessHandle(somefunction) to set the handle
 	def postExploit(self,credential):
 		# Ensuring success, *NOTE* currently there is a threading bug that is overwriting parts of memory?
+		# This is a, jimmy rigged way of doing, however it will suffice, and doesn't hurt performance, as this will only happen, 1-2 times during a 
+		# bruteforce
 		if self.attemptLogin(credential):
+			self.totalLogins += 1
 			message = self.message.successMessage("Authentication Success ")
 			message += "username: %s password: %s "%(self.message.format(credential.username,['green','bold']),self.message.format(credential.password,['green','bold']))
 			print(message)
@@ -521,7 +532,8 @@ class HttpHive(Hive):
 		return form_method
 
 	# function: __loadSQLInjectionFields__
-	# description: Loads some SQL Injections specific for logins
+	# description: Loads some SQL Injections specific for logins, into self.SQLInjectionCredentialList
+	# 	SQLInjectionCredentialList is used within __attemptSQLInjection__
 	def __loadLoginSQLInjection__(self):
 		cleanup_regex = re.compile(r'\s')
 		with open(self.SQLInjectionFile,'r') as sqlfile:
@@ -565,8 +577,8 @@ class HttpHive(Hive):
 	
 	# function: __attemptSQLInjection__
 	# description: Threaded SQL injection login attempt
-	def __attemptSQLInjection__(self,credlist):
-		for credential in credlist:
+	def __attemptSQLInjection__(self,sqlLoadedCreds):
+		for credential in sqlLoadedCreds:
 			result = self.attemptLogin(credential)
 			self.__displayMessage__(credential,result)
 			if self.isFinished == False:
