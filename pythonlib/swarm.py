@@ -187,6 +187,7 @@ class Swarm(object):
 		print(message)
 		self.hive.testSQLInjections = self.useSqlInjections
 		self.hive.verbose = self.verbose
+		self.hive.UPDATE_TIME = self.updateTime
 		self.hive.start(self.threads)	
 		self.hive.showPostStatisticsMessage()
 	
