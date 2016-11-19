@@ -1,4 +1,4 @@
-from console import Console
+from message import Message
 from hive import HttpHive
 from login_spider import LoginSpider
 import requests
@@ -8,7 +8,7 @@ import re
 # class: Swarm
 # description: This is The main driving class of the swarm bruteforcer
 class Swarm(object):
-	VERSION = 0.021
+	VERSION = 0.022
 	UPDATE_REGEX = re.compile(r'VERSION.*\">([\d\.]+)') 
 	username = None
 	usernameFile = None
@@ -24,10 +24,10 @@ class Swarm(object):
 	depth = None
 	author = None
 	killSignal = None
-	console = None
 	spider = None
 	hive = None
 	proxies = None
+	message = None
 
 	# function: __init__
 	# param: username(str)			- The username to use for the bruteforce
@@ -58,9 +58,8 @@ class Swarm(object):
 		self.author = "szech696"
 		self.depth = depth
 		self.killSignal = False
-		self.console = Console()
 		self.proxies = None
-		self.checkVersion()
+		self.message = Message()
 
 	# function: getCrawlingMessage
 	# return: str
@@ -73,13 +72,13 @@ class Swarm(object):
 		message = self.getLogo()
 		if self.useTor:
 			messageDict["Using-Tor"] = self.checkIfTorEnabled()
-		message += self.console.format('Author: %s\n',['dim'])%self.console.format(self.author,['magenta'])
-		message += self.console.format('Target: %s\n',['dim'])%self.console.format(self.target,['yellow'])	
+		message += self.message.format('Author: %s\n',['dim'])%self.message.format(self.author,['magenta'])
+		message += self.message.format('Target: %s\n',['dim'])%self.message.format(self.target,['yellow'])	
 		for key in sorted(messageDict.keys()):
 			if messageDict[key]:
-				message += self.console.format(key+": %s\n",['dim'])%(self.console.format(str(messageDict[key]),['white','bold']))
+				message += self.message.format(key+": %s\n",['dim'])%(self.message.format(str(messageDict[key]),['white','bold']))
 			else:
-				message += self.console.format(key+": %s\n",['dim'])%(self.console.format("None",['red','bold']))
+				message += self.message.format(key+": %s\n",['dim'])%(self.message.format("None",['red','bold']))
 		return message
 
 	# function: getBruteforcingMessage
@@ -94,14 +93,14 @@ class Swarm(object):
 				"Using-Tor":self.useTor,
 				"Attempting SQL-Injection":self.useSqlInjections }
 		message = self.getLogo()
-		message += self.console.format('Author: %s\n',['dim'])%self.console.format(self.author,['magenta'])
-		message += self.console.format('Target: %s\n',['dim'])%self.console.format(self.target,['yellow'])	
-		message += self.console.format('Base-Payload: %s\n',['dim'])%self.console.format(str(self.hive.examplePayload),['red','normal'])	
+		message += self.message.format('Author: %s\n',['dim'])%self.message.format(self.author,['magenta'])
+		message += self.message.format('Target: %s\n',['dim'])%self.message.format(self.target,['yellow'])	
+		message += self.message.format('Base-Payload: %s\n',['dim'])%self.message.format(str(self.hive.examplePayload),['red','normal'])	
 		for key in sorted(messageDict.keys()):
 			if messageDict[key] or messageDict[key] == False:
-				message += self.console.format(key+": %s\n",['dim'])%(self.console.format(str(messageDict[key]),['white','bold']))
+				message += self.message.format(key+": %s\n",['dim'])%(self.message.format(str(messageDict[key]),['white','bold']))
 			else:
-				message += self.console.format(key+": %s\n",['dim'])%(self.console.format("None",['red','bold']))
+				message += self.message.format(key+": %s\n",['dim'])%(self.message.format("None",['red','bold']))
 		if not self.hive.examplePayload:
 			message = self.criticalSignal("No login forms found on: %s\n"%self.target)
 			self.killSignal = True
@@ -110,8 +109,6 @@ class Swarm(object):
 	# function: startCrawling
 	# description: Starts the crawling process of Swarm
 	def startCrawling(self):
-		message = self.getCrawlingMessage()	
-		print(message)
 		validateDict = self.getValidateDict()
 		message = ''
 		for key in validateDict.keys():
@@ -134,7 +131,9 @@ class Swarm(object):
 			message += self.criticalSignal("There were errors exiting")
 			print(message)
 			exit()	
+		message = self.getCrawlingMessage()	
 		print(message)
+		self.checkForUpdate()
 		self.spider = LoginSpider(self.depth)
 		self.spider.url = self.target
 		self.spider.updateTime = self.updateTime
@@ -185,6 +184,7 @@ class Swarm(object):
 			print(message)
 			exit()
 		print(message)
+		self.checkForUpdate()
 		self.hive.testSQLInjections = self.useSqlInjections
 		self.hive.verbose = self.verbose
 		self.hive.UPDATE_TIME = self.updateTime
@@ -215,8 +215,8 @@ class Swarm(object):
         	logos = logo.split('(-$-)')
         	logo = random.choice(logos)
         	logo = logo + "\n"
-		logo = self.console.format(logo,['yellow','bold'])
-		logo += self.console.format("SWARM\n",['magenta','bold'])
+		logo = self.message.format(logo,['yellow','bold'])
+		logo += self.message.format("SWARM\n",['magenta','bold'])
         	return logo
 
 	# function: getBasePayload
@@ -261,8 +261,8 @@ class Swarm(object):
 	# return: str		- The orginal message formatted as critical
 	# description: Sends the critical message to swarm to exit, and returns a relevant message to display to the user
 	def criticalSignal(self,message):
-		criticalmessage = self.console.getTimeString()
-		criticalmessage += self.console.format(' [!!] %s'%message,['red','bold'])
+		criticalmessage = self.message.getTimeString()
+		criticalmessage += self.message.format(' [!!] %s'%message,['red','bold'])
 		return criticalmessage	
 	
 	# function: successLog
@@ -270,19 +270,25 @@ class Swarm(object):
 	# return: str		- The orginal message formatted as successful
 	# description: Sends a succuess message to be formatted as succues, and returns a relevant message to display to the user
 	def successMessage(self,message):
-		successLog = self.console.getTimeString()
-		successLog += self.console.format(' [+] %s'%message,['green','bold'])
+		successLog = self.message.getTimeString()
+		successLog += self.message.format(' [+] %s'%message,['green','bold'])
 		return successLog
 	
-	# function: checkVersion
+	# function: checkForUpdate
 	# description: Checks for new versions of swarm, notifies the user if one is available
-	def checkVersion(self):
+	def checkForUpdate(self):
 		try:
 			response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
 			if self.UPDATE_REGEX.search(response.text):
 				version = self.UPDATE_REGEX.findall(response.text)[0]
 				if float(version) > self.VERSION:
-					message = self.successMessage("Version %s available, update at https://github.com/szech696/swarm/\n"%version)
+					message = self.message.successMessage("Version %s available, update at %s"%(version,
+					self.message.format("https://github.com/szech696/swarm/",['white'])))
 					print(message)
 		except:
 			pass
+	
+	# function: showVersion
+	# description: Prints the version of swarm
+	def showVersion(self):
+		print("swarm v%s"%str(self.VERSION))

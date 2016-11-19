@@ -93,7 +93,10 @@ class Widow(object):
 					pass
 		# Not very elegant, but owell
 		for thread in self.workers:
-			thread.join()
+			try:
+				thread.join()
+			except RuntimeError:
+				pass
 		while threads_still_alive:
 			threads_still_alive = False
 			for thread in self.workers:
