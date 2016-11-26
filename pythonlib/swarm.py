@@ -278,7 +278,7 @@ class Swarm(object):
 	# description: Checks for new versions of swarm, notifies the user if one is available
 	def checkForUpdate(self):
 		try:
-		#	response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
+			response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
 			response  = None
 			if self.UPDATE_REGEX.search(response.text):
 				version = self.UPDATE_REGEX.findall(response.text)[0]
