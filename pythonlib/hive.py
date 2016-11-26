@@ -435,7 +435,7 @@ class HttpHive(Hive):
 		timeFlag = False
 		# ----------------- End Flags -------------------------------------------
 		try:	
-			lenth = int(response.headers['content-length'])
+			length = int(response.headers['content-length'])
 		except KeyError as e:
 			length = len(response.text)
 		totalForms = len(LoginForm.FORM_REGEX.findall(cleanedHtml))
