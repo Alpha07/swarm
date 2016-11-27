@@ -2,6 +2,7 @@
 from pythonlib.swarm import Swarm
 import sys
 import getopt
+import time
 #--------------------------------------------------------------------------------------------------------------------------
 # Author: Szech696
 # Desciption: SWARM is a bruteforce utility for HTML login forms. 
@@ -11,7 +12,6 @@ import getopt
 # THIS IS FOR EDUCATION OR RESEARCH USE ONLY. AUTHOR DOES NOT CONDONE ANY USE FOR ATTEMPT TO GAIN UNAUTHORIZED ACCESS TO 
 # SOMEONE ELSES ACCOUNT and/or PROPERTY. DO NOT USE ON A DOMAIN/PROPERTY THAT DOES NOT BELONG TO YOU, OR YOU DO NOT HAVE PERMISSION TO DO SO!
 # USE AT YOUR OWN RISK!! AND ABOVE ALL ELSE - ENJOY ;)
-#
 #--------------------------------------------------------------------------------------------------------------------------
 
 
@@ -39,12 +39,14 @@ def showhelp():
         print('\t--sql-inject				Try to bypass login with SQL Injections.')
         print('\t--crawl=<ARGUMENT>			Crawls the domain for login forms')
 	print('\t--version				Displays this version of swarm, and exits')
+	print('\t--output-file=<ARGUMENT>		Output file to log results of successful credentials used')
 	usage()
 
 # function: main
 # param: argv		- System arguments
 # description: Main function of swarm
 def main(argv):
+	outputFile = 'results %s.txt'%time.strftime("%c")
 	swarm = None
 	target = None
 	username = None
@@ -72,7 +74,8 @@ def main(argv):
 							 'username=',
 							 'sql-inject',
 							 'crawl=',
-							 'version'])	
+							 'version',
+							 'output-file='])	
 	# Invalid Option
 	except getopt.GetoptError as err:
 		print(str(err))
@@ -101,13 +104,15 @@ def main(argv):
 			checkVersion = True	
 		if opt == '--tor':
 			tor = True	
+		if opt == '--output-file':
+			outputFile = arg
 		if opt == '--sql-inject':
 			sqlInject = True	
 		if opt == '--crawl':
 			crawl = True	
 			depth = int(arg)
 
-	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime)
+	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime,outputFile)
 	if checkVersion:
 		swarm.showVersion()
 	elif crawl:

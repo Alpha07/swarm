@@ -36,6 +36,7 @@ class Hive:
 	logLock = None
 	message = Message()
 	totalLogins = None
+	outputFile = None
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
@@ -521,6 +522,14 @@ class HttpHive(Hive):
 		# This is a, jimmy rigged way of doing, however it will suffice, and doesn't hurt performance, as this will only happen, 1-3 times during a 
 		# bruteforce
 		if self.attemptLogin(credential):
+			try:
+				outMessage = "Login was successful with the following login: Username: %s, Password: %s\n"%(credential.username,credential.password)
+				outputFile = open(self.outputFile,'w+a')
+				outputFile.write(outMessage)
+				outputFile.close()
+			except IOError as e:
+				errorMessage = self.message.criticalMessage("There was an error writing to \"%s\" did you run with sudo?"%self.outputFile)
+				print(errorMessage)
 			self.totalLogins += 1
 			message = self.message.successMessage("Authentication Success ")
 			message += "username: %s password: %s "%(self.message.format(credential.username,['green','bold']),self.message.format(credential.password,['green','bold']))

@@ -8,7 +8,7 @@ import re
 # class: Swarm
 # description: This is The main driving class of the swarm bruteforcer
 class Swarm(object):
-	VERSION = 0.023
+	VERSION = 0.024
 	UPDATE_REGEX = re.compile(r'VERSION.*\">([\d\.]+)') 
 	username = None
 	usernameFile = None
@@ -28,6 +28,7 @@ class Swarm(object):
 	hive = None
 	proxies = None
 	message = None
+	outputFile = None
 
 	# function: __init__
 	# param: username(str)			- The username to use for the bruteforce
@@ -42,8 +43,10 @@ class Swarm(object):
 	# param: shouldCrawl(Boolean)		- Should Crawl or not
 	# param: depth(int)			- Crawl depth
 	# param: updateTime(int)		- Time to show statistics in seconds
+	# param: output(str)			- Output-file to use for the results
 	# description: Constructor
-	def __init__(self,username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,useSqlInjections,shouldCrawl,depth,updateTime):
+	def __init__(self,username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,useSqlInjections,shouldCrawl,depth,updateTime,outputFile):
+		self.outputFile = outputFile
 		self.username = username
 		self.usernameFile = usernameFile
 		self.passwordFile = passwordFile
@@ -173,6 +176,7 @@ class Swarm(object):
 		self.hive.username = self.username
 		self.hive.passwordFile = self.passwordFile
 		self.hive.proxies = self.proxies
+		self.hive.outputFile = self.outputFile
 		self.hive.setup()	
 		message = self.getBruteforcingMessage()
 		try:
@@ -251,7 +255,8 @@ class Swarm(object):
 			validateDict['url-error-message'] = self.criticalSignal('no url specified. Please specify with --url=<URL>')		
 		if self.useTor == True or self.checkTor == True:
 			if not self.checkIfTorEnabled() or not self.useTor:
-				validateDict['tor-error-message'] = self.criticalSignal('It appears tor is not working properly. Did you use --tor? You could be missing dependencies')
+				validateDict['tor-error-message'] = self.criticalSignal('It appears tor is not working properly. Is tor currently running?'+
+											'Did you use --tor? You could be missing dependencies')
 			else:
 				validateDict['tor-message'] = self.successMessage("It appears tor is working properly")
 		return validateDict
