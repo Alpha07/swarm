@@ -4,6 +4,7 @@ import re
 from threading import Lock
 from time import time
 from message import Message
+from bloomfilter import BloomFilter
 
 # class: LoginSpider
 # description: This spider is responsible for finding logins on a domain, and stores them to: login_urls
@@ -21,8 +22,10 @@ class LoginSpider(Widow):
 	updateTime = None
 	message = Message()
 	statsLock = None
+	outputFile = None
+	wordFilter = None
 	
-	def __init__(self,depth,minimumWordLength,maximumWordLength):
+	def __init__(self,depth,minimumWordLength,maximumWordLength,outputFile):
 		Widow.__init__(self,depth)
 		self.minimumWordLength = minimumWordLength
 		self.maximumWordLength = maximumWordLength
@@ -32,6 +35,8 @@ class LoginSpider(Widow):
 		self.updateTime = 10
 		self.verbose = False
 		self.statsLock = Lock()
+		self.outputFile = outputFile
+		self.wordFilter = BloomFilter(1000000000)
 
 	# function: parse - Overriden
 	# param: Response	- The Response object to parse
@@ -51,8 +56,15 @@ class LoginSpider(Widow):
 		if self.WORD_REGEX.search(html):
 			words = self.WORD_REGEX.findall(html)
 			for word in words:
-				if word not in self.wordlist:
+				if not self.wordFilter.inArray(word):
 					self.wordlist.append(word)	
+					self.wordFilter.append(word)
+					if len(self.wordlist) > 4000:
+						outputFile = open(self.outputFile,'a')
+						for word in sorted(self.wordlist):
+							outputFile.write(word+'\n')
+						outputFile.close()
+						self.wordlist = list()
 		self.showStatistics()
 
 	# function: showStatistics

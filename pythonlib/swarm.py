@@ -149,7 +149,7 @@ class Swarm(object):
 		message = self.getCrawlingMessage()	
 		print(message)
 		self.checkForUpdate()
-		self.spider = LoginSpider(self.depth,self.minWord,self.maxWord)
+		self.spider = LoginSpider(self.depth,self.minWord,self.maxWord,self.outputFile)
 		self.spider.url = self.target
 		self.spider.updateTime = self.updateTime
 		self.spider.proxies = self.proxies
