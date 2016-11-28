@@ -14,6 +14,7 @@
 * Able to by-pass logins via SQL Injections if option is specified
 * Crawl the domain to discover login forms
 * Easy to inherit from Hive to create different types of bruteforcing tools
+* Able to generate a focused wordlist while crawling a domain
 
 #Getting Started
 To use, first clone the github repo, and then give swarm execute permissions

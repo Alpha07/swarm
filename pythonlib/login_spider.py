@@ -8,19 +8,27 @@ from message import Message
 # class: LoginSpider
 # description: This spider is responsible for finding logins on a domain, and stores them to: login_urls
 class LoginSpider(Widow):
-	CLEANUP_REGEX = re.compile(r'\n')
-	FORM_REGEX = re.compile(r'<form(.*?)<\/form>')	
-	LOGIN_FORM_REGEX = re.compile(r'input\stype\=[\"\']password[\"\']')
-	TEXT_FIELD_REGEX = re.compile(r'input\stype\=[\"\'](text)[\"\']')
+	CLEANUP_REGEX = re.compile(r'[(\s\s)|\t|\n]+')
+	FORM_REGEX = re.compile(r'<form(.*?)<\/form>',re.I)	
+	LOGIN_FORM_REGEX = re.compile(r'input\stype\=[\"\']password[\"\']',re.I)
+	TEXT_FIELD_REGEX = re.compile(r'input\stype\=[\"\'](text)[\"\']',re.I)
+	WORD_REGEX = None
+	minimumWordLength = None
+	maximumWordLength = None
 	login_urls = None
+	wordlist = None
 	lastUpdate = None
 	updateTime = None
 	message = Message()
 	statsLock = None
 	
-	def __init__(self,depth):
+	def __init__(self,depth,minimumWordLength,maximumWordLength):
 		Widow.__init__(self,depth)
+		self.minimumWordLength = minimumWordLength
+		self.maximumWordLength = maximumWordLength
+		self.WORD_REGEX = re.compile(r'[\'\"\s>]([a-zA-Z]{%d,%d})[\s\.<\?\!\'\"\,]'%(self.minimumWordLength,self.maximumWordLength))
 		self.login_urls = list()
+		self.wordlist = list()
 		self.updateTime = 10
 		self.verbose = False
 		self.statsLock = Lock()
@@ -31,7 +39,7 @@ class LoginSpider(Widow):
 	def parse(self,response):
 		Widow.parse(self,response)
 		forms = list()
-		html = self.CLEANUP_REGEX.subn('',response.text)[0]
+		html = self.CLEANUP_REGEX.subn(' ',response.text)[0]
 		if self.FORM_REGEX.search(html):
 			forms = self.FORM_REGEX.findall(html)	
 			for form in forms:
@@ -40,6 +48,11 @@ class LoginSpider(Widow):
 					if len(fields) == 1:
 						if response.url not in self.login_urls:
 							self.login_urls.append(response.url)
+		if self.WORD_REGEX.search(html):
+			words = self.WORD_REGEX.findall(html)
+			for word in words:
+				if word.lower() not in self.wordlist:
+					self.wordlist.append(word.lower())	
 		self.showStatistics()
 
 	# function: showStatistics
@@ -53,8 +66,10 @@ class LoginSpider(Widow):
 			pagesCrawled = self.message.format(str(self.crawledPages),['white'])	
 			totalLoginsFound = len(self.login_urls)
 			totalLoginsFound = self.message.format(str(totalLoginsFound),['green'])
+			totalWordsFound = self.message.format(str(len(self.wordlist)),['green'])
 			message = self.message.infoMessage("Statistics ")
 			message += self.message.format("pages-crawled: %s",['dim'])%pagesCrawled
 			message += self.message.format(" total-logins-forms-found: %s",['dim'])%totalLoginsFound
+			message += self.message.format(" total-words-found: %s",['dim'])%totalWordsFound
 			with self.statsLock:
 				print(message)

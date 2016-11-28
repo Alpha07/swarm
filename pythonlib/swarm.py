@@ -8,7 +8,7 @@ import re
 # class: Swarm
 # description: This is The main driving class of the swarm bruteforcer
 class Swarm(object):
-	VERSION = 0.024
+	VERSION = 0.025
 	UPDATE_REGEX = re.compile(r'VERSION.*\">([\d\.]+)') 
 	username = None
 	usernameFile = None
@@ -29,6 +29,8 @@ class Swarm(object):
 	proxies = None
 	message = None
 	outputFile = None
+	minWord = None
+	maxWord = None
 
 	# function: __init__
 	# param: username(str)			- The username to use for the bruteforce
@@ -45,7 +47,7 @@ class Swarm(object):
 	# param: updateTime(int)		- Time to show statistics in seconds
 	# param: output(str)			- Output-file to use for the results
 	# description: Constructor
-	def __init__(self,username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,useSqlInjections,shouldCrawl,depth,updateTime,outputFile):
+	def __init__(self,username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,useSqlInjections,shouldCrawl,depth,updateTime,outputFile,minWord,maxWord):
 		self.outputFile = outputFile
 		self.username = username
 		self.usernameFile = usernameFile
@@ -63,6 +65,16 @@ class Swarm(object):
 		self.killSignal = False
 		self.proxies = None
 		self.message = Message()
+		self.minWord = minWord
+		self.maxWord = maxWord
+		try:
+			output = open(outputFile,'a')
+			output.close()
+		except IOError as e:
+			errorMessage = self.criticalSignal("Need root permissions for creating custom log file: %s\n"%outputFile)
+			errorMessage += self.criticalSignal("There were errors exiting")
+			print(errorMessage)
+			exit()
 
 	# function: getCrawlingMessage
 	# return: str
@@ -137,14 +149,18 @@ class Swarm(object):
 		message = self.getCrawlingMessage()	
 		print(message)
 		self.checkForUpdate()
-		self.spider = LoginSpider(self.depth)
+		self.spider = LoginSpider(self.depth,self.minWord,self.maxWord)
 		self.spider.url = self.target
 		self.spider.updateTime = self.updateTime
 		self.spider.proxies = self.proxies
 		self.spider.crawl(self.threads)
-		message = self.successMessage("Finished Crawling %d pages, and found %d login forms\n"%(self.spider.crawledPages,len(self.spider.login_urls)))
+		message = self.successMessage("Finished Crawling %d pages, found %d login forms, and found %d custom words\n"%(self.spider.crawledPages,len(self.spider.login_urls),len(self.spider.wordlist)))
 		for url in self.spider.login_urls:
 			message += '\t%s\n'%url
+		outputFile = open(self.outputFile,'a')
+		for word in sorted(self.spider.wordlist):
+			outputFile.write(word + '\n')
+		outputFile.close()
 		print(message)
 
 	# function: startBruteforcing

@@ -19,9 +19,13 @@ import time
 # description: Displays Example message and exits
 def usage():
 	print('Usage:')
+	print('\t%s --[option]=<arguemnt>'%sys.argv[0])
+	print('bruteforcing example:')
 	print('\t'+sys.argv[0] + ' %s %s %s '%('--url=http://example.com/login.php',
 			'--user-file=usernames.txt',
 			'--pass-file=passwords.txt'))
+	print('data-collection example:')
+	print('\t%s %s %s %s %s %s'%(sys.argv[0],'--url=\'http://example.com\'','--min-word=4','--max-word=8','--crawl=2','--output-file=\'custom-wordlist.lst\''))
 	sys.exit()
 
 # function: help
@@ -37,16 +41,18 @@ def showhelp():
         print('\t--tor					Use tor with swarm')
         print('\t--check-tor				To confirm you are using TOR before swarm continues.')
         print('\t--sql-inject				Try to bypass login with SQL Injections.')
-        print('\t--crawl=<NUMBER>			Crawls the domain for login forms')
+        print('\t--crawl=<NUMBER>			Crawls the domain for login forms, and creates a focused wordlist')
 	print('\t--version				Displays this version of swarm, and exits')
-	print('\t--output-file=<oFILE>			Output file to log results of successful credentials used')
+	print('\t--output-file=<oFILE>			Output file to log successful login results, or a name of word-list while crawling a domain')
+	print('\t--min-word=<NUMBER>			Smallest allowed size for a word, while crawling for a wordlist')
+	print('\t--max-word=<NUMBER>			Largest allowed size for a word, while crawling for a wordllist')
 	usage()
 
 # function: main
 # param: argv		- System arguments
 # description: Main function of swarm
 def main(argv):
-	outputFile = 'results %s.txt'%time.strftime("%c")
+	outputFile = None
 	swarm = None
 	target = None
 	username = None
@@ -54,13 +60,15 @@ def main(argv):
 	passwordFile = None
 	threads = 1
 	verbose = False
-	updateTime = None
+	updateTime = 20
 	checkTor = False	
 	tor = False
 	sqlInject = False
 	crawl = False
 	depth = None
 	checkVersion = False
+	minWord = 3 
+	maxWord = 8 
 	try:
 		opts, args = getopt.getopt(argv[1:],'' ,['help',
 							 'url=',
@@ -75,7 +83,9 @@ def main(argv):
 							 'sql-inject',
 							 'crawl=',
 							 'version',
-							 'output-file='])	
+							 'output-file=',
+							 'min-word=',
+							 'max-word='])	
 	# Invalid Option
 	except getopt.GetoptError as err:
 		print(str(err))
@@ -111,8 +121,16 @@ def main(argv):
 		if opt == '--crawl':
 			crawl = True	
 			depth = int(arg)
+		if opt == '--min-word':
+			minWord = int(arg)
+		if opt == '--max-word':
+			maxWord = int(arg)
 
-	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime,outputFile)
+	if crawl and not outputFile:
+		outputFile = 'wordlist-%s.txt'%time.strftime("%c")
+	elif not outputFile:
+		outputFile = 'results %s.txt'%time.strftime("%c")
+	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime,outputFile,minWord,maxWord)
 	if checkVersion:
 		swarm.showVersion()
 	elif crawl:
