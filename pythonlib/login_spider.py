@@ -24,6 +24,7 @@ class LoginSpider(Widow):
 	statsLock = None
 	outputFile = None
 	wordFilter = None
+	totalWords = None
 	
 	def __init__(self,depth,minimumWordLength,maximumWordLength,outputFile):
 		Widow.__init__(self,depth)
@@ -37,6 +38,7 @@ class LoginSpider(Widow):
 		self.statsLock = Lock()
 		self.outputFile = outputFile
 		self.wordFilter = BloomFilter(1000000000)
+		self.totalWords = 0
 
 	# function: parse - Overriden
 	# param: Response	- The Response object to parse
@@ -57,6 +59,7 @@ class LoginSpider(Widow):
 			words = self.WORD_REGEX.findall(html)
 			for word in words:
 				if not self.wordFilter.inArray(word):
+					self.totalWords += 1
 					self.wordlist.append(word)	
 					self.wordFilter.append(word)
 					if len(self.wordlist) > 4000:
@@ -78,7 +81,7 @@ class LoginSpider(Widow):
 			pagesCrawled = self.message.format(str(self.crawledPages),['white'])	
 			totalLoginsFound = len(self.login_urls)
 			totalLoginsFound = self.message.format(str(totalLoginsFound),['green'])
-			totalWordsFound = self.message.format(str(len(self.wordlist)),['green'])
+			totalWordsFound = self.message.format(str(self.totalWords),['green'])
 			message = self.message.infoMessage("Statistics ")
 			message += self.message.format("pages-crawled: %s",['dim'])%pagesCrawled
 			message += self.message.format(" total-logins-forms-found: %s",['dim'])%totalLoginsFound
