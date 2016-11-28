@@ -24,7 +24,6 @@ chmod 755 swarm
 ##Installing Dependencies 
 ```shell
 pip install bitarray
-pip install requests
 pip install -U requests[socks]
 pip install pexpect
 apt-get install tor
