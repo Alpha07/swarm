@@ -51,8 +51,8 @@ class LoginSpider(Widow):
 		if self.WORD_REGEX.search(html):
 			words = self.WORD_REGEX.findall(html)
 			for word in words:
-				if word.lower() not in self.wordlist:
-					self.wordlist.append(word.lower())	
+				if word not in self.wordlist:
+					self.wordlist.append(word)	
 		self.showStatistics()
 
 	# function: showStatistics
