@@ -523,7 +523,8 @@ class HttpHive(Hive):
 		# bruteforce
 		if self.attemptLogin(credential):
 			try:
-				outMessage = "Login was successful with the following login: Username: %s, Password: %s\n"%(credential.username,credential.password)
+				
+				outMessage = "Login was successful with the following login: Target: %s, Username: %s, Password: %s\n"%(self.target,credential.username,credential.password)
 				outputFile = open(self.outputFile,'w+a')
 				outputFile.write(outMessage)
 				outputFile.close()
