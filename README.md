@@ -15,6 +15,7 @@
 * Crawl the domain to discover login forms
 * Easy to inherit from Hive to create different types of bruteforcing tools
 * Able to generate a focused wordlist while crawling a domain
+* Able to specify how many tries before TOR exit node switches
 
 #Getting Started
 To use, first clone the github repo, and then give swarm execute permissions
