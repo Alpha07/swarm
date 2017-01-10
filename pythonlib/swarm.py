@@ -31,6 +31,7 @@ class Swarm(object):
 	outputFile = None
 	minWord = None
 	maxWord = None
+	maxTriesTillNodeSwitch = None
 
 	# function: __init__
 	# param: username(str)			- The username to use for the bruteforce
@@ -47,7 +48,7 @@ class Swarm(object):
 	# param: updateTime(int)		- Time to show statistics in seconds
 	# param: output(str)			- Output-file to use for the results
 	# description: Constructor
-	def __init__(self,username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,useSqlInjections,shouldCrawl,depth,updateTime,outputFile,minWord,maxWord):
+	def __init__(self,username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,useSqlInjections,shouldCrawl,depth,updateTime,outputFile,minWord,maxWord,maxTriesTillNodeSwitch):
 		self.outputFile = outputFile
 		self.username = username
 		self.usernameFile = usernameFile
@@ -67,6 +68,7 @@ class Swarm(object):
 		self.message = Message()
 		self.minWord = minWord
 		self.maxWord = maxWord
+		self.maxTriesTillNodeSwitch = maxTriesTillNodeSwitch
 		try:
 			output = open(outputFile,'a')
 			output.close()
@@ -194,6 +196,9 @@ class Swarm(object):
 		self.hive.proxies = self.proxies
 		self.hive.outputFile = self.outputFile
 		self.hive.setup()	
+		if self.useTor:
+			self.hive.allowNodeSwitching = True
+			self.hive.trysBeforeNodeSwitch = self.maxTriesTillNodeSwitch
 		message = self.getBruteforcingMessage()
 		try:
 			message += validateDict['tor-message']

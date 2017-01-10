@@ -9,6 +9,7 @@ from ftplib import FTP
 import json
 from message import Message
 from form_controls import LoginForm
+import subprocess
 try:
 	import pexpect
 except:
@@ -37,6 +38,8 @@ class Hive:
 	message = Message()
 	totalLogins = None
 	outputFile = None
+	trysBeforeNodeSwitch = None
+	allowNodeSwitching = None
 	
 	# function: __init__
 	# description: Constructor - *NOTE* Call parent __init__ from any inherited objects from Hive
@@ -52,6 +55,8 @@ class Hive:
 		self.useTor = False
 		self.totalLogins = 0
 		self.logLock = threading.Lock()
+		self.trysBeforeNodeSwitch = 5
+		self.allowNodeSwitching = False
 
 	# function: start
 	# param: workers(int)			- The number of threads to create
@@ -105,7 +110,16 @@ class Hive:
 	# description: Any object that inherits from Hive, should have their own version of this function
 	def attemptLogin(self,credential):
 		self.total_attempts += 1
+		if self.total_attempts%self.trysBeforeNodeSwitch == 0 and self.allowNodeSwitching == True:
+			message = self.message.infoMessage("Switching TOR exit node...")	
+			print(message)
+			self.switchExitNode()	
 		return False
+
+	# function: switchExitNode
+	# description: for extra functionallity override and call this 
+	def switchExitNode(self):
+		process = subprocess.Popen(['killall','-HUP', 'tor'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	# function: __displayMessage__
 	# param: credential
@@ -348,7 +362,12 @@ class HttpHive(Hive):
 			else:
 				self.__attemptSQLInjection__(self.SQLInjectionCredentialList)
 		Hive.start(self,workers)
-	
+
+	# function: switchExitNode
+	# description: Switches TOR exit node
+	def switchExitNode(self):
+		process = subprocess.Popen(['killall','-HUP', 'tor'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 	# function: setupLoginForm
 	# param: html(str)		- The html of the url to the login form
 	# description: Sets up the necessary parameters to interact with the web-form
@@ -498,7 +517,7 @@ class HttpHive(Hive):
 	# function: setup - Overriden
 	# description: Prepares this Hive for its attack, *NOTE* This must be called before start is called
 	def setup(self):
-		Hive.setup(self)
+		Hive.setup(self)	
 		if self.useTor:
 			self.setupTOR()
 		html = self.makeRequest(self.target, None, "GET").text

@@ -46,6 +46,7 @@ def showhelp():
 	print('\t--output-file=<oFILE>			Output file to log successful login results, or a name of word-list while crawling a domain')
 	print('\t--min-word=<NUMBER>			Smallest allowed size for a word, while crawling for a wordlist')
 	print('\t--max-word=<NUMBER>			Largest allowed size for a word, while crawling for a wordllist')
+	print("\t--switch-node-after=<NUMBER>		Switches TOR exit node after NUMBER tries. This results in a new IP, and increases anonymity")
 	usage()
 
 # function: main
@@ -69,6 +70,7 @@ def main(argv):
 	checkVersion = False
 	minWord = 3 
 	maxWord = 8 
+	maxTriesTillNodeSwitch = 10
 	try:
 		opts, args = getopt.getopt(argv[1:],'' ,['help',
 							 'url=',
@@ -85,7 +87,8 @@ def main(argv):
 							 'version',
 							 'output-file=',
 							 'min-word=',
-							 'max-word='])	
+							 'max-word=',
+							 'switch-node-after='])	
 	# Invalid Option
 	except getopt.GetoptError as err:
 		print(str(err))
@@ -125,12 +128,14 @@ def main(argv):
 			minWord = int(arg)
 		if opt == '--max-word':
 			maxWord = int(arg)
+		if opt == '--switch-node-after':
+			maxTriesTillNodeSwitch = int(arg)
 
 	if crawl and not outputFile:
 		outputFile = 'wordlist-%s.txt'%time.strftime("%c")
 	elif not outputFile:
 		outputFile = 'results %s.txt'%time.strftime("%c")
-	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime,outputFile,minWord,maxWord)
+	swarm = Swarm(username,usernameFile,passwordFile,target,threads,verbose,tor,checkTor,sqlInject,crawl,depth,updateTime,outputFile,minWord,maxWord,maxTriesTillNodeSwitch)
 	if checkVersion:
 		swarm.showVersion()
 	elif crawl:
