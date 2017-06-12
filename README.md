@@ -6,7 +6,9 @@
 
 
 # About Swarm 
-**Swarm is a Bruteforcing pentesting tool for bruteforcing html logins**
+**Swarm is a Bruteforcing pentesting tool for bruteforcing html logins.**
+
+
 **If you enjoy and are pleased with Swarm, take a moment and star this github. It only takes a second, so please take a second now and star at the top of the page.**
 ## Some Notable Features
 * Multi-Threaded
