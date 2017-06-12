@@ -90,7 +90,7 @@ class FTPHive(Hive):
 
 threadCount = 4
 ftp_bruteforce = FTPHive()
-ftp_bruteforce.target = 'ftp_server_address'                    # specify the target
+ftp_bruteforce.target = 'x.x.x.x'                               # specify the target
 ftp_bruteforce.usernameFile = 'usernames.txt'                   # the username file to use
 ftp_bruteforce.passwordFile = 'passwords.txt'                   # the password file to use
 ftp_bruteforce.verbose = True                                   # verbose output
