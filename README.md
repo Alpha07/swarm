@@ -5,9 +5,10 @@
  Swarm is ONLY intended to be used on your own pentesting labs, or with explicit consent from the owner of the property being tested.** 
 
 
-#About Swarm 
+# About Swarm 
 **Swarm is a Bruteforcing pentesting tool for bruteforcing html logins**
-##Some Notable Features
+**If you enjoy and are pleased with Swarm, take a moment and star this github. It only takes a second, so please take a second now and star at the top of the page.**
+## Some Notable Features
 * Multi-Threaded
 * Randomized user agents
 * Able to tunnel requests through tor, just use --tor option
@@ -17,30 +18,30 @@
 * Able to generate a focused wordlist while crawling a domain
 * Able to specify how many tries before TOR exit node switches
 
-#Getting Started
+# Getting Started
 To use, first clone the github repo, and then give swarm execute permissions
 ```shell
 git clone https://github.com/szech696/swarm && cd swarm
 chmod 755 swarm		
 ```	
-##Installing Dependencies 
+## Installing Dependencies 
 ```shell
 pip install bitarray
 pip install -U requests[socks]
 pip install pexpect
 apt-get install tor
 ``` 
-##Usage
+## Usage
 
-###For all options
+### For all options
 ```shell
 ./swarm --help
 ``` 
-###Using on Damn Vulnerable Web App
+### Using on Damn Vulnerable Web App
 ```shell
 ./swarm --url='http://localhost/dvwa/login.php' --user-file='usernames.txt' --pass-file='passwords.txt' --verbose --threads=1 
 ```
-##Using Hive to Develop New Tools 
+## Using Hive to Develop New Tools 
 Hive makes developing new bruteforcing tools a breeze! The following is an example of a FTP bruteforcer
 ```python
 from pythonlib.hive import Hive
